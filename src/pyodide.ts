@@ -1,6 +1,7 @@
 import { loadPyodide, type PyodideAPI } from "pyodide";
 import { computed, ref, type Ref } from "vue";
 
+const canvasRef = ref<HTMLCanvasElement | null>(null);
 const pyodideRef = ref<PyodideAPI | null>(null);
 const stdoutRef = ref("");
 const utf8Decoder = new TextDecoder();
@@ -13,10 +14,30 @@ export const pyodideLoaded = computed(() => {
   return pyodideRef.value != null;
 });
 
+export function setCanvas(canvas: HTMLCanvasElement): void {
+  if (pyodideRef.value) {
+    pyodideRef.value.canvas.setCanvas2D(canvas);
+    fixSDL(pyodideRef.value);
+  }
+
+  canvasRef.value = canvas;
+}
+
 export async function usePyodide(): Promise<PyodideAPI> {
   if (!pyodideRef.value) {
-    pyodideRef.value = await loadPyodide();
-    pyodideRef.value.setStdout({ write: updateStdout });
+    const pyodide = await loadPyodide({
+      indexURL: `${import.meta.env.BASE_URL}assets/pyodide`,
+      packageBaseUrl: `${window.location.protocol}//${window.location.host}/assets/wheels/`,
+    });
+    await pyodide.loadPackage(["pygame-ce"]);
+    pyodide.setStdout({ write: updateStdout });
+
+    if (canvasRef.value) {
+      pyodide.canvas.setCanvas2D(canvasRef.value);
+      fixSDL(pyodide);
+    }
+
+    pyodideRef.value = pyodide;
   }
 
   return pyodideRef.value;
@@ -24,6 +45,10 @@ export async function usePyodide(): Promise<PyodideAPI> {
 
 export function useStdout(): Ref<string> {
   return stdoutRef;
+}
+
+function fixSDL(pyodide: PyodideAPI): void {
+  (pyodide as any)._api._skip_unwind_fatal_error = true;
 }
 
 function updateStdout(buffer: Uint8Array): number {

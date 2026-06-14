@@ -21,6 +21,7 @@ function copyPyodideAssets() {
           PYODIDE_EXCLUDE,
         ),
         dest: "assets",
+        rename: { stripBase: 4 },
       },
     ],
   });

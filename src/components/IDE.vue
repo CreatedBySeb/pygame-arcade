@@ -4,6 +4,7 @@ import { useProgram } from "../program.ts";
 import { clearOutput, pyodideLoaded, usePyodide } from "../pyodide.ts";
 import Console from "./Console.vue";
 import Editor from "./Editor.vue";
+import Window from "./Window.vue";
 
 const programRef = useProgram();
 
@@ -35,6 +36,7 @@ onMounted(() => {
       <button :disabled="!pyodideLoaded" @click="run">
         {{ pyodideLoaded ? "Run it!" : "Loading Python..." }}
       </button>
+      <Window></Window>
     </div>
   </div>
 </template>
