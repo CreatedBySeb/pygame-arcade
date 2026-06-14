@@ -15,12 +15,18 @@ import {
   lineNumbers,
 } from "@codemirror/view";
 import { onMounted, useTemplateRef } from "vue";
-import { usePyodide } from "../pyodide";
+import { useProgram } from "../program";
 
-let doc = Text.of([`print("Hello, world!")`]);
+const containerRef = useTemplateRef("editor");
+const programRef = useProgram();
+
+const updateListener = EditorView.updateListener.of((update) => {
+  if (!update.docChanged) return;
+  programRef.value = update.view.state.doc.toString();
+});
 
 let startState = EditorState.create({
-  doc,
+  doc: Text.of(programRef.value.split("\n")),
   extensions: [
     lineNumbers(),
     indentOnInput(),
@@ -29,92 +35,30 @@ let startState = EditorState.create({
     highlightActiveLine(),
     keymap.of(defaultKeymap),
     python(),
+    updateListener,
   ],
 });
 
-let view: EditorView | null = null;
-
-const decoder = new TextDecoder();
-
-const containerRef = useTemplateRef("editor-container");
-const stdoutRef = useTemplateRef("console-stdout");
-
 onMounted(() => {
-  console.log(`Mounting editor on ${containerRef.value}`);
-
-  view = new EditorView({
+  new EditorView({
     state: startState,
     parent: containerRef.value!,
   });
 });
-
-function updateStdout(buffer: Uint8Array): number {
-  const stdout = stdoutRef.value;
-
-  if (stdout) {
-    const str = decoder.decode(buffer);
-    stdout.innerText += str;
-    stdout.parentElement!.scrollTo({
-      top: stdout.scrollHeight,
-      behavior: "instant",
-    });
-  }
-
-  return buffer.length;
-}
-
-async function run() {
-  stdoutRef.value!.innerText = "";
-
-  const pyodide = await usePyodide();
-  pyodide.setStdout({
-    write: updateStdout,
-  });
-
-  try {
-    await pyodide.runPythonAsync(view!.state.doc.toString());
-  } catch (e) {
-    if (e instanceof pyodide.ffi.PythonError) {
-      alert("Failed to run due to the following error:\n" + e.message);
-    }
-  }
-}
 </script>
 
 <template>
-  <div id="editor">
-    <button @click="run">Run it!</button>
-    <div id="editor-container" ref="editor-container"></div>
-    <div id="editor-console">
-      <pre id="console-stdout" ref="console-stdout"></pre>
-    </div>
-  </div>
+  <div id="editor" ref="editor"></div>
 </template>
 
 <style>
 #editor {
   display: flex;
+  flex: 1 1 100%;
   flex-direction: column;
-  height: 100%;
-  width: 100%;
-}
 
-#editor-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-
-  > div {
-    flex: 1 1 100%;
+  & > div {
+    flex: 1 0 100%;
   }
-}
-
-#editor-console {
-  box-sizing: border-box;
-  height: 20em;
-  overflow: scroll;
-  padding: 0.5em 1em;
-  width: 100%;
 }
 </style>

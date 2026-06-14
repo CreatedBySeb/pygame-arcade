@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Editor from "./components/Editor.vue";
+import IDE from "./components/IDE.vue";
 </script>
 
 <template>
-  <Editor></Editor>
+  <IDE></IDE>
 </template>
