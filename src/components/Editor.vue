@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defaultKeymap } from "@codemirror/commands";
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { python } from "@codemirror/lang-python";
 import {
   bracketMatching,
@@ -7,6 +7,7 @@ import {
   indentOnInput,
   syntaxHighlighting,
 } from "@codemirror/language";
+import { searchKeymap } from "@codemirror/search";
 import { EditorState, Text } from "@codemirror/state";
 import {
   EditorView,
@@ -29,11 +30,12 @@ let startState = EditorState.create({
   doc: Text.of(programRef.value.split("\n")),
   extensions: [
     lineNumbers(),
+    history(),
     indentOnInput(),
     syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
     bracketMatching(),
     highlightActiveLine(),
-    keymap.of(defaultKeymap),
+    keymap.of([...defaultKeymap, ...searchKeymap, ...historyKeymap]),
     python(),
     updateListener,
   ],
