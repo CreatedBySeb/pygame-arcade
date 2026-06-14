@@ -1,13 +1,32 @@
 <script setup lang="ts">
 import { defaultKeymap } from "@codemirror/commands";
 import { python } from "@codemirror/lang-python";
+import {
+  bracketMatching,
+  defaultHighlightStyle,
+  indentOnInput,
+  syntaxHighlighting,
+} from "@codemirror/language";
 import { EditorState } from "@codemirror/state";
-import { EditorView, keymap } from "@codemirror/view";
+import {
+  EditorView,
+  highlightActiveLine,
+  keymap,
+  lineNumbers,
+} from "@codemirror/view";
 import { onMounted, useTemplateRef } from "vue";
 
 let startState = EditorState.create({
   doc: "Hello World",
-  extensions: [keymap.of(defaultKeymap), python()],
+  extensions: [
+    lineNumbers(),
+    indentOnInput(),
+    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+    bracketMatching(),
+    highlightActiveLine(),
+    keymap.of(defaultKeymap),
+    python(),
+  ],
 });
 
 const containerRef = useTemplateRef("editor-container");
