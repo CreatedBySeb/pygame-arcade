@@ -11,14 +11,14 @@ onMounted(() => {
 
 <template>
   <div id="window">
-    <canvas id="canvas" ref="canvas" height="640" width="360"></canvas>
+    <canvas id="canvas" ref="canvas" height="640" width="480"></canvas>
   </div>
 </template>
 
 <style>
 #window {
   & > canvas {
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 4 / 3;
     width: 100%;
   }
 }

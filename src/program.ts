@@ -7,7 +7,7 @@ import pygame
 
 
 BACKGROUND_COLOUR: pygame.Color = pygame.Color("black")
-CANVAS_SIZE: tuple[int, int] = (640, 360)
+CANVAS_SIZE: tuple[int, int] = (640, 480)
 FRAME_DELAY: float = 1.0 / 60.0
 
 
