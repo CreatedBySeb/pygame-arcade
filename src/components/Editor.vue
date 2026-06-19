@@ -5,6 +5,7 @@ import {
   bracketMatching,
   defaultHighlightStyle,
   indentOnInput,
+  indentUnit,
   syntaxHighlighting,
 } from "@codemirror/language";
 import { searchKeymap } from "@codemirror/search";
@@ -32,6 +33,7 @@ let startState = EditorState.create({
     lineNumbers(),
     history(),
     indentOnInput(),
+    indentUnit.of("    "),
     syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
     bracketMatching(),
     highlightActiveLine(),
