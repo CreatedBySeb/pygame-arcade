@@ -1,29 +1,8 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
-import { useProgram } from "../program.ts";
-import { clearOutput, pyodideLoaded, usePyodide } from "../pyodide.ts";
+import { pyodideLoaded, runProgram } from "../pyodide.ts";
 import Console from "./Console.vue";
 import Editor from "./Editor.vue";
 import Window from "./Window.vue";
-
-const programRef = useProgram();
-
-async function run() {
-  clearOutput();
-  const pyodide = await usePyodide();
-
-  try {
-    await pyodide.runPythonAsync(programRef.value);
-  } catch (e) {
-    if (e instanceof pyodide.ffi.PythonError) {
-      alert("Failed to run due to the following error:\n" + e.message);
-    }
-  }
-}
-
-onMounted(() => {
-  usePyodide();
-});
 </script>
 
 <template>
@@ -33,7 +12,7 @@ onMounted(() => {
       <Console></Console>
     </div>
     <div id="game-area">
-      <button :disabled="!pyodideLoaded" @click="run">
+      <button :disabled="!pyodideLoaded" @click="runProgram">
         {{ pyodideLoaded ? "Run it!" : "Loading Python..." }}
       </button>
       <Window></Window>

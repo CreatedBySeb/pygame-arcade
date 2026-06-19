@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useTemplateRef, watch } from "vue";
-import { useStdout } from "../pyodide";
+import { useOutput } from "../pyodide";
 
 const consoleRef = useTemplateRef("console");
-const stdoutRef = useStdout();
+const [stdoutRef] = useOutput();
 
 watch(stdoutRef, async () => {
   const el = consoleRef.value;

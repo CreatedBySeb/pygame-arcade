@@ -1,58 +1,114 @@
-import { loadPyodide, type PyodideAPI } from "pyodide";
-import { computed, ref, type Ref } from "vue";
+import { computed, ref, type ComputedRef } from "vue";
+import { useProgram } from "./program";
+import type { IncomingWorkerMessage, OutgoingWorkerMessage } from "./workerApi";
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-const pyodideRef = ref<PyodideAPI | null>(null);
+const readyRef = ref<boolean>(false);
+const stderrRef = ref("");
 const stdoutRef = ref("");
-const utf8Decoder = new TextDecoder();
 
-export function clearOutput() {
+// Launch Pyodide in a worker for execution control and performance
+const pyodideWorker = new Worker(new URL("./worker.ts", import.meta.url), {
+  name: "pyodideWorker",
+  type: "module",
+});
+
+// Handle messages sent by the worker
+pyodideWorker.onmessage = async (event): Promise<void> => {
+  if (!event.data || typeof event.data._type !== "string") {
+    return;
+  }
+
+  const message = event.data as OutgoingWorkerMessage;
+
+  switch (message._type) {
+    case "ready": {
+      readyRef.value = true;
+
+      if (canvasRef.value) {
+        transferCanvasControl(canvasRef.value);
+      }
+      break;
+    }
+
+    case "stderr": {
+      stderrRef.value += message.text;
+      break;
+    }
+
+    case "stdout": {
+      stdoutRef.value += message.text;
+      break;
+    }
+  }
+};
+
+/**
+ * Reset the stdout and stderr buffers
+ */
+export function clearOutput(): void {
+  stderrRef.value = "";
   stdoutRef.value = "";
 }
 
-export const pyodideLoaded = computed(() => {
-  return pyodideRef.value != null;
+/**
+ * Computed ref that indicates whether Pyodide and Pygame have finished loading
+ * in the worker
+ */
+export const pyodideLoaded = computed((): boolean => {
+  return readyRef.value;
 });
 
+/**
+ * Transfers control of the specified canvas element to the Pyodide worker and
+ * sets it up for use with Pygame
+ *
+ * @param canvas The canvas element to use
+ */
 export function setCanvas(canvas: HTMLCanvasElement): void {
-  if (pyodideRef.value) {
-    pyodideRef.value.canvas.setCanvas2D(canvas);
-    fixSDL(pyodideRef.value);
+  if (pyodideLoaded.value) {
+    transferCanvasControl(canvas);
   }
 
   canvasRef.value = canvas;
 }
 
-export async function usePyodide(): Promise<PyodideAPI> {
-  if (!pyodideRef.value) {
-    const pyodide = await loadPyodide({
-      indexURL: `${import.meta.env.BASE_URL}assets/pyodide`,
-      packageBaseUrl: `${window.location.protocol}//${window.location.host}/assets/wheels/`,
-    });
-    await pyodide.loadPackage(["pygame-ce"]);
-    pyodide.setStdout({ write: updateStdout });
-
-    if (canvasRef.value) {
-      pyodide.canvas.setCanvas2D(canvasRef.value);
-      fixSDL(pyodide);
-    }
-
-    pyodideRef.value = pyodide;
-  }
-
-  return pyodideRef.value;
+/**
+ * Request the Pyodide worker to execute the currently written program
+ */
+export async function runProgram(): Promise<void> {
+  clearOutput();
+  const programRef = useProgram();
+  pyodideWorker.postMessage({ _type: "run", code: programRef.value });
 }
 
-export function useStdout(): Ref<string> {
-  return stdoutRef;
+/**
+ * Get the output buffers as computed refs for display
+ * @returns A tuple of computed refs for the stdout and stderr buffers
+ */
+export function useOutput(): [ComputedRef<string>, ComputedRef<string>] {
+  return [computed(() => stdoutRef.value), computed(() => stderrRef.value)];
 }
 
-function fixSDL(pyodide: PyodideAPI): void {
-  (pyodide as any)._api._skip_unwind_fatal_error = true;
+/**
+ * Internal helper for sending worker messages with typing
+ * @param message The message to send to the worker
+ * @param transfer Any objects to transfer ownership of to the worker
+ */
+function postMessage(
+  message: IncomingWorkerMessage,
+  transfer: Transferable[] = [],
+): void {
+  pyodideWorker.postMessage(message, transfer);
 }
 
-function updateStdout(buffer: Uint8Array): number {
-  const str = utf8Decoder.decode(buffer);
-  stdoutRef.value = stdoutRef.value + str;
-  return buffer.length;
+/**
+ * Internal helper for transferring canvas control, extracted so it can be
+ * deferred if the worker is not ready yet
+ *
+ * @param canvas The canvas element to transfer control over
+ */
+function transferCanvasControl(canvas: HTMLCanvasElement): void {
+  const offscreen = canvas.transferControlToOffscreen();
+  postMessage({ _type: "setCanvas", canvas: offscreen }, [offscreen]);
 }
