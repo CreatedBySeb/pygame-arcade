@@ -1,5 +1,7 @@
 // --- Incoming Messages ---
 
+import type { TypedArray } from "pyodide/ffi";
+
 export interface RunMessage {
   _type: "run";
   /** The text of the program to run */
@@ -12,7 +14,21 @@ export interface SetCanvasMessage {
   canvas: OffscreenCanvas;
 }
 
-export type IncomingWorkerMessage = RunMessage | SetCanvasMessage;
+export interface SetInterruptMessage {
+  _type: "setInterrupt";
+  /** The buffer used to signal the interrupt */
+  buffer: TypedArray;
+}
+
+export interface StopMessage {
+  _type: "stop";
+}
+
+export type IncomingWorkerMessage =
+  | RunMessage
+  | SetCanvasMessage
+  | SetInterruptMessage
+  | StopMessage;
 
 // --- Outgoing Messages ---
 
@@ -32,7 +48,12 @@ export interface StdoutMessage {
   text: string;
 }
 
+export interface TaskStartedMessage {
+  _type: "taskStarted";
+}
+
 export type OutgoingWorkerMessage =
   | ReadyMessage
   | StderrMessage
-  | StdoutMessage;
+  | StdoutMessage
+  | TaskStartedMessage;

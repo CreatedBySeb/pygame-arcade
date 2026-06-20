@@ -2,10 +2,16 @@ import { computed, ref, type ComputedRef } from "vue";
 import { useProgram } from "./program";
 import type { IncomingWorkerMessage, OutgoingWorkerMessage } from "./workerApi";
 
+const INTERRUPT_CLEAR: number = 0;
+const INTERRUPT_SET: number = 2;
+
+const interruptBuf = new Uint8Array(new SharedArrayBuffer(1));
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const readyRef = ref<boolean>(false);
-const stderrRef = ref("");
-const stdoutRef = ref("");
+const startedRef = ref<boolean>(false);
+const stderrRef = ref<string>("");
+const stdoutRef = ref<string>("");
+const taskRunningRef = ref<boolean>(false);
 
 // Launch Pyodide in a worker for execution control and performance
 const pyodideWorker = new Worker(new URL("./worker.ts", import.meta.url), {
@@ -24,10 +30,12 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
   switch (message._type) {
     case "ready": {
       readyRef.value = true;
+      postMessage({ _type: "setInterrupt", buffer: interruptBuf });
 
       if (canvasRef.value) {
         transferCanvasControl(canvasRef.value);
       }
+
       break;
     }
 
@@ -40,6 +48,11 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
       stdoutRef.value += message.text;
       break;
     }
+
+    case "taskStarted": {
+      taskRunningRef.value = true;
+      break;
+    }
   }
 };
 
@@ -49,6 +62,31 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
 export function clearOutput(): void {
   stderrRef.value = "";
   stdoutRef.value = "";
+}
+
+/**
+ * Interrupt the current execution
+ */
+export async function interrupt(): Promise<void> {
+  if (!startedRef.value) {
+    return;
+  }
+
+  if (taskRunningRef.value) {
+    // Task cancellation is cleanest option
+    postMessage({ _type: "stop" });
+    taskRunningRef.value = false;
+  } else {
+    // Fall back to interrupt
+    interruptBuf[0] = INTERRUPT_SET;
+
+    // Wait for the buffer to clear, polling every 0.5s
+    while (interruptBuf[0] !== INTERRUPT_CLEAR) {
+      await sleep(500);
+    }
+  }
+
+  startedRef.value = false;
 }
 
 /**
@@ -77,8 +115,11 @@ export function setCanvas(canvas: HTMLCanvasElement): void {
  * Request the Pyodide worker to execute the currently written program
  */
 export async function runProgram(): Promise<void> {
+  await interrupt();
   clearOutput();
+  interruptBuf[0] = INTERRUPT_CLEAR;
   const programRef = useProgram();
+  startedRef.value = true;
   pyodideWorker.postMessage({ _type: "run", code: programRef.value });
 }
 
@@ -100,6 +141,19 @@ function postMessage(
   transfer: Transferable[] = [],
 ): void {
   pyodideWorker.postMessage(message, transfer);
+}
+
+/**
+ * Internal helper for asynchronously sleeping for a given number of
+ * milliseconds using setTimeout
+ *
+ * @param duration The duration ot wait in ms
+ * @returns A void Promise which resolves after the duration
+ */
+function sleep(duration: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(), duration);
+  });
 }
 
 /**

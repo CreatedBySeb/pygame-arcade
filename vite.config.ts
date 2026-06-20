@@ -1,7 +1,7 @@
 import vue from "@vitejs/plugin-vue";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
 const PYODIDE_EXCLUDE: string[] = [
@@ -11,7 +11,7 @@ const PYODIDE_EXCLUDE: string[] = [
   "!**/pyodide/node_modules",
 ];
 
-function copyPyodideAssets() {
+function copyPyodideAssets(): PluginOption {
   const pyodideDir = dirname(fileURLToPath(import.meta.resolve("pyodide")));
 
   return viteStaticCopy({
@@ -31,4 +31,10 @@ function copyPyodideAssets() {
 export default defineConfig({
   optimizeDeps: { exclude: ["pyodide"] },
   plugins: [vue(), copyPyodideAssets()],
+  server: {
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
+  },
 });

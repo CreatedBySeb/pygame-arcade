@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
-import { pyodideLoaded, runProgram } from "../pyodide.ts";
+import { interrupt, pyodideLoaded, runProgram } from "../pyodide.ts";
 import Console from "./Console.vue";
 import Editor from "./Editor.vue";
 import Window from "./Window.vue";
@@ -21,9 +21,12 @@ import Window from "./Window.vue";
     </SplitterPanel>
     <SplitterPanel :size="30" :min-size="25">
       <div id="game-area">
-        <button :disabled="!pyodideLoaded" @click="runProgram">
-          {{ pyodideLoaded ? "Run it!" : "Loading Python..." }}
-        </button>
+        <div class="control-buttons">
+          <button :disabled="!pyodideLoaded" @click="runProgram">
+            {{ pyodideLoaded ? "Run it!" : "Loading Python..." }}
+          </button>
+          <button :disabled="!pyodideLoaded" @click="interrupt">Stop</button>
+        </div>
         <Window></Window>
       </div>
     </SplitterPanel>
@@ -35,6 +38,13 @@ import Window from "./Window.vue";
   display: flex;
   height: 100%;
   width: 100%;
+
+  & .control-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    padding: 0.5rem;
+  }
 
   & .p-splitter-gutter {
     background-color: var(--accent-color);

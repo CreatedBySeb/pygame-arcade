@@ -1,7 +1,12 @@
 import { loadPyodide, type PyodideAPI } from "pyodide";
 import type { IncomingWorkerMessage, OutgoingWorkerMessage } from "./workerApi";
 
+interface TaskLike {
+  cancel(msg?: string): void;
+}
+
 let pyodide: PyodideAPI | null = null;
+let task: TaskLike | null = null;
 const decoder: TextDecoder = new TextDecoder();
 const dimensions: [number, number] = [640, 480];
 
@@ -55,7 +60,18 @@ self.onmessage = async (event): Promise<void> => {
 
   switch (message._type) {
     case "run": {
-      await pyodide.runPythonAsync(message.code);
+      // FIXME: Handle indirectly started tasks?
+      const maybeCoroutine = pyodide.runPython(message.code);
+
+      if (maybeCoroutine && maybeCoroutine.type === "coroutine") {
+        const webloop = pyodide.runPython(
+          "import asyncio\nasyncio.get_running_loop()",
+        );
+
+        task = webloop.create_task(maybeCoroutine);
+        post({ _type: "taskStarted" });
+      }
+
       break;
     }
 
@@ -91,6 +107,20 @@ self.onmessage = async (event): Promise<void> => {
       };
 
       pyodide.canvas.setCanvas2D(canvas);
+      break;
+    }
+
+    case "setInterrupt": {
+      pyodide.setInterruptBuffer(message.buffer);
+      break;
+    }
+
+    case "stop": {
+      if (task) {
+        task.cancel();
+        task = null;
+      }
+
       break;
     }
   }
