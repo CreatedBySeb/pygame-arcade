@@ -128,7 +128,7 @@ export async function runProgram(): Promise<void> {
   interruptBuf[0] = INTERRUPT_CLEAR;
   const programRef = useProgram();
   startedRef.value = true;
-  pyodideWorker.postMessage({ _type: "run", code: programRef.value });
+  postMessage({ _type: "run", code: programRef.value });
 }
 
 /**
