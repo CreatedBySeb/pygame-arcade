@@ -1,4 +1,7 @@
 body {
+  --accent-color: gray;
+  --default-border: .1em solid var(--accent-color);
+
   margin: 0;
 }
 
