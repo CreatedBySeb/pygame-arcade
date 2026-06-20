@@ -48,8 +48,8 @@ watch(stderrRef, async () => {
 <style>
 #console {
   border: var(--default-border);
-  flex: 0 0 20em;
-  height: 20em;
+  height: 100%;
+  width: 100%;
 
   & pre {
     height: 100%;

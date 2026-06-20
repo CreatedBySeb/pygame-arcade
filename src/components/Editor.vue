@@ -58,11 +58,20 @@ onMounted(() => {
 <style>
 #editor {
   display: flex;
-  flex: 1 1 100%;
+  height: 100%;
   flex-direction: column;
+  width: 100%;
 
   & > div {
     flex: 1 0 100%;
+  }
+
+  & .cm-editor {
+    height: 100%;
+
+    & .cm-scroller {
+      overflow: auto;
+    }
   }
 }
 </style>

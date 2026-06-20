@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import Splitter from "primevue/splitter";
+import SplitterPanel from "primevue/splitterpanel";
 import { pyodideLoaded, runProgram } from "../pyodide.ts";
 import Console from "./Console.vue";
 import Editor from "./Editor.vue";
@@ -6,18 +8,26 @@ import Window from "./Window.vue";
 </script>
 
 <template>
-  <div id="ide">
-    <div id="main-area">
-      <Editor></Editor>
-      <Console></Console>
-    </div>
-    <div id="game-area">
-      <button :disabled="!pyodideLoaded" @click="runProgram">
-        {{ pyodideLoaded ? "Run it!" : "Loading Python..." }}
-      </button>
-      <Window></Window>
-    </div>
-  </div>
+  <Splitter id="ide">
+    <SplitterPanel :size="70" :min-size="50">
+      <Splitter id="main-area" layout="vertical">
+        <SplitterPanel :size="75" :min-size="30">
+          <Editor></Editor>
+        </SplitterPanel>
+        <SplitterPanel :size="25" :min-size="20">
+          <Console></Console
+        ></SplitterPanel>
+      </Splitter>
+    </SplitterPanel>
+    <SplitterPanel :size="30" :min-size="25">
+      <div id="game-area">
+        <button :disabled="!pyodideLoaded" @click="runProgram">
+          {{ pyodideLoaded ? "Run it!" : "Loading Python..." }}
+        </button>
+        <Window></Window>
+      </div>
+    </SplitterPanel>
+  </Splitter>
 </template>
 
 <style>
@@ -26,17 +36,8 @@ import Window from "./Window.vue";
   height: 100%;
   width: 100%;
 
-  & > div {
-    display: flex;
-    flex-direction: column;
+  & .p-splitter-gutter {
+    background-color: var(--accent-color);
   }
-}
-
-#main-area {
-  width: 70%;
-}
-
-#game-area {
-  width: 30%;
 }
 </style>
