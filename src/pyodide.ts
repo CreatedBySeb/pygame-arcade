@@ -1,6 +1,10 @@
 import { computed, ref, type ComputedRef } from "vue";
 import { useProgram } from "./program";
-import type { IncomingWorkerMessage, OutgoingWorkerMessage } from "./workerApi";
+import {
+  assertNever,
+  type IncomingWorkerMessage,
+  type OutgoingWorkerMessage,
+} from "./workerApi";
 
 const INTERRUPT_CLEAR: number = 0;
 const INTERRUPT_SET: number = 2;
@@ -52,6 +56,10 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
     case "taskStarted": {
       taskRunningRef.value = true;
       break;
+    }
+
+    default: {
+      assertNever(message);
     }
   }
 };

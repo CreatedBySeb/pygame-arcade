@@ -57,3 +57,13 @@ export type OutgoingWorkerMessage =
   | StderrMessage
   | StdoutMessage
   | TaskStartedMessage;
+
+// --- Helpers ---
+
+/**
+ * A helper to ensure switch statements handle all cases
+ * @param x The variable that should have all cases handled
+ */
+export function assertNever(x: never): void {
+  throw new Error(`Case not handled: ${x}`);
+}

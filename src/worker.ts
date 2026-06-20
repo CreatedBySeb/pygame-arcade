@@ -1,5 +1,9 @@
 import { loadPyodide, type PyodideAPI } from "pyodide";
-import type { IncomingWorkerMessage, OutgoingWorkerMessage } from "./workerApi";
+import {
+  assertNever,
+  type IncomingWorkerMessage,
+  type OutgoingWorkerMessage,
+} from "./workerApi";
 
 interface TaskLike {
   cancel(msg?: string): void;
@@ -122,6 +126,10 @@ self.onmessage = async (event): Promise<void> => {
       }
 
       break;
+    }
+
+    default: {
+      assertNever(message);
     }
   }
 };
