@@ -1,6 +1,8 @@
 import { loadPyodide, type PyodideAPI } from "pyodide";
 import {
   assertNever,
+  joinPath,
+  PROJECT_ROOT,
   type IncomingWorkerMessage,
   type OutgoingWorkerMessage,
 } from "./workerApi";
@@ -26,6 +28,13 @@ const pyodideReady = loadPyodide({
   // Transmit stdout/stderr
   pyo.setStderr({ write: sendStderr });
   pyo.setStdout({ write: sendStdout });
+
+  // Create 'project' directory
+  pyo.FS.mkdir(PROJECT_ROOT);
+  pyo.FS.writeFile(
+    joinPath([PROJECT_ROOT, "main.py"]),
+    `print("Hello, world!")`,
+  );
 
   // Alert main thread we are ready to run
   post({ _type: "ready" });
@@ -63,6 +72,30 @@ self.onmessage = async (event): Promise<void> => {
   const message = event.data as IncomingWorkerMessage;
 
   switch (message._type) {
+    case "listContents": {
+      const children = pyodide.FS.readdir(message.path);
+      const directories: string[] = [];
+      const files: string[] = [];
+
+      for (const name of children) {
+        if (name === "." || name === "..") {
+          continue;
+        }
+
+        const path = joinPath([message.path, name]);
+        const { node } = pyodide.FS.lookupPath(path);
+
+        if (node.isFolder) {
+          directories.push(name);
+        } else {
+          files.push(name);
+        }
+      }
+
+      post({ _type: "contentsList", path: message.path, directories, files });
+      break;
+    }
+
     case "run": {
       // FIXME: Handle indirectly started tasks?
       const maybeCoroutine = pyodide.runPython(message.code);

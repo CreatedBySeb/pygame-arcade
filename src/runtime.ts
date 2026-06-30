@@ -1,7 +1,10 @@
-import { computed, ref, type ComputedRef } from "vue";
+import { computed, reactive, readonly, ref, type ComputedRef } from "vue";
 import { useProgram } from "./program";
 import {
   assertNever,
+  joinPath,
+  PROJECT_ROOT,
+  splitPath,
   type IncomingWorkerMessage,
   type OutgoingWorkerMessage,
 } from "./workerApi";
@@ -9,8 +12,25 @@ import {
 const INTERRUPT_CLEAR: number = 0;
 const INTERRUPT_SET: number = 2;
 
+export type DirectoryContents = Record<string, FSItem>;
+
+export interface Directory {
+  children: DirectoryContents;
+  path: string;
+  type: "directory";
+}
+
+export interface File {
+  path: string;
+  type: "file";
+}
+
+export type FSItem = Directory | File;
+
 const interruptBuf = new Uint8Array(new SharedArrayBuffer(1));
 const canvasRef = ref<HTMLCanvasElement | null>(null);
+const fileStructureRef = ref<DirectoryContents>({});
+const loadingPathsRef = ref<string[]>([]);
 const readyRef = ref<boolean>(false);
 const startedRef = ref<boolean>(false);
 const stderrRef = ref<string>("");
@@ -32,6 +52,36 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
   const message = event.data as OutgoingWorkerMessage;
 
   switch (message._type) {
+    case "contentsList": {
+      // if (!message.path.startsWith("/") || message.path.length < 2) {
+      //   console.error(`Malformed message: ${message}`);
+      //   return;
+      // }
+
+      const dir = walkPath(message.path);
+
+      for (const name of message.files) {
+        dir.children[name] = reactive({
+          type: "file",
+          path: joinPath([message.path, name]),
+        });
+      }
+
+      for (const name of message.directories) {
+        dir.children[name] = reactive({
+          type: "directory",
+          path: joinPath([message.path, name]),
+          children: {},
+        });
+      }
+
+      loadingPathsRef.value = loadingPathsRef.value.filter(
+        (value) => value != message.path,
+      );
+
+      break;
+    }
+
     case "ready": {
       readyRef.value = true;
       postMessage({ _type: "setInterrupt", buffer: interruptBuf });
@@ -73,6 +123,11 @@ export function clearOutput(): void {
 }
 
 /**
+ * A read-only representation of the file system structure
+ */
+export const fileSystem = readonly(fileStructureRef);
+
+/**
  * Interrupt the current execution
  */
 export async function interrupt(): Promise<void> {
@@ -97,6 +152,9 @@ export async function interrupt(): Promise<void> {
   startedRef.value = false;
 }
 
+/** The paths currently having their contents refreshed */
+export const loadingPaths = readonly(loadingPathsRef);
+
 /**
  * Computed ref that indicates whether Pyodide and Pygame have finished loading
  * in the worker
@@ -104,6 +162,12 @@ export async function interrupt(): Promise<void> {
 export const pyodideLoaded = computed((): boolean => {
   return readyRef.value;
 });
+
+/** Asynchronously updates file system data to display the contents of the provided path */
+export function refreshContents(path: string) {
+  loadingPathsRef.value.push(path);
+  postMessage({ _type: "listContents", path });
+}
 
 /**
  * Transfers control of the specified canvas element to the Pyodide worker and
@@ -173,4 +237,47 @@ function sleep(duration: number): Promise<void> {
 function transferCanvasControl(canvas: HTMLCanvasElement): void {
   const offscreen = canvas.transferControlToOffscreen();
   postMessage({ _type: "setCanvas", canvas: offscreen }, [offscreen]);
+}
+
+/**
+ * Get a reference to the directory at the given path by walking the structure
+ * @param path The path to traverse to
+ */
+function walkPath(path: string): Directory {
+  if (!path.startsWith(PROJECT_ROOT)) {
+    throw new Error(`Unexpected path '${path}'`);
+  }
+
+  path = path.slice(PROJECT_ROOT.length);
+  const parts = splitPath(path);
+
+  let dir: Directory = {
+    type: "directory",
+    path: PROJECT_ROOT,
+    children: fileStructureRef.value,
+  };
+
+  parts.forEach((part, i) => {
+    if (!Object.hasOwn(dir.children, part)) {
+      // If a part doesn't exist, create it as a directory
+      const fullPath = joinPath([PROJECT_ROOT, ...parts.slice(0, i + 1)]);
+      const directory: Directory = reactive({
+        type: "directory",
+        path: fullPath,
+        children: {},
+      });
+      dir.children[part] = directory;
+      dir = directory;
+    } else {
+      const maybeDir = dir.children[part];
+
+      if (maybeDir.type !== "directory") {
+        throw new Error(`Part '${part}' in path '${path}' is not a directory`);
+      }
+
+      dir = maybeDir;
+    }
+  });
+
+  return dir;
 }

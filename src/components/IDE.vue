@@ -5,22 +5,30 @@ import { interrupt, pyodideLoaded, runProgram } from "../runtime.ts";
 import Console from "./Console.vue";
 import Editor from "./Editor.vue";
 import Window from "./Window.vue";
+import FileBrowser from "./FileBrowser.vue";
 </script>
 
 <template>
   <Splitter id="ide">
     <SplitterPanel :size="70" :min-size="50">
-      <Splitter id="main-area" layout="vertical">
-        <SplitterPanel :size="75" :min-size="30">
-          <Editor></Editor>
+      <Splitter>
+        <SplitterPanel :size="25" :min-size="15">
+          <FileBrowser></FileBrowser>
         </SplitterPanel>
-        <SplitterPanel :size="25" :min-size="20">
-          <Console></Console
-        ></SplitterPanel>
+        <SplitterPanel :size="75" :min-size="60">
+          <Splitter layout="vertical">
+            <SplitterPanel :size="75" :min-size="30">
+              <Editor></Editor>
+            </SplitterPanel>
+            <SplitterPanel :size="25" :min-size="20">
+              <Console></Console>
+            </SplitterPanel>
+          </Splitter>
+        </SplitterPanel>
       </Splitter>
     </SplitterPanel>
-    <SplitterPanel :size="30" :min-size="25">
-      <div id="game-area">
+    <SplitterPanel :size="30" :min-size="20">
+      <div>
         <div class="control-buttons">
           <button :disabled="!pyodideLoaded" @click="runProgram">
             {{ pyodideLoaded ? "Run it!" : "Loading Python..." }}

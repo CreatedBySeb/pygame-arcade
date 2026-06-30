@@ -2,6 +2,12 @@
 
 import type { TypedArray } from "pyodide/ffi";
 
+export interface ListContentsMessage {
+  _type: "listContents";
+  /** The directory path to list contents for */
+  path: string;
+}
+
 export interface RunMessage {
   _type: "run";
   /** The text of the program to run */
@@ -25,12 +31,23 @@ export interface StopMessage {
 }
 
 export type IncomingWorkerMessage =
+  | ListContentsMessage
   | RunMessage
   | SetCanvasMessage
   | SetInterruptMessage
   | StopMessage;
 
 // --- Outgoing Messages ---
+
+export interface ContentsListMessage {
+  _type: "contentsList";
+  /** The names of the child directories in the directory */
+  directories: string[];
+  /** The names of the files in the directory  */
+  files: string[];
+  /** The path to the directory the contents are listed for */
+  path: string;
+}
 
 export interface ReadyMessage {
   _type: "ready";
@@ -53,6 +70,7 @@ export interface TaskStartedMessage {
 }
 
 export type OutgoingWorkerMessage =
+  | ContentsListMessage
   | ReadyMessage
   | StderrMessage
   | StdoutMessage
@@ -60,10 +78,54 @@ export type OutgoingWorkerMessage =
 
 // --- Helpers ---
 
+/** The root directory in the filesystem where project files are stored */
+export const PROJECT_ROOT = "/project";
+
 /**
  * A helper to ensure switch statements handle all cases
  * @param x The variable that should have all cases handled
  */
 export function assertNever(x: never): void {
   throw new Error(`Case not handled: ${x}`);
+}
+
+/**
+ * Gets the basename (final part) of a path
+ * @param path The path to get the basename of
+ */
+export function getBaseName(path: string): string {
+  const base = splitPath(path).at(-1);
+
+  if (base === undefined) {
+    throw new Error(`Path '${path}' has no parts`);
+  }
+
+  return base;
+}
+
+/**
+ * Joins multiple paths or parts of paths together into one string
+ * @param parts The path parts to join together
+ * @returns The joined path as a single string
+ */
+export function joinPath(parts: string[]): string {
+  return parts.join("/");
+}
+
+/**
+ * Splits a path into an array of components in the same order
+ * @param path The path to split into components
+ * @returns An array of path components
+ */
+export function splitPath(path: string): string[] {
+  if (path.startsWith("/")) {
+    path = path.slice(1);
+  }
+
+  // The root should just be an empty path, not a single empty value
+  if (!path.length) {
+    return [];
+  }
+
+  return path.split("/");
 }
