@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
-import { interrupt, pyodideLoaded, runProgram } from "../pyodide.ts";
+import { interrupt, pyodideLoaded, runProgram } from "../runtime.ts";
 import Console from "./Console.vue";
 import Editor from "./Editor.vue";
 import Window from "./Window.vue";
