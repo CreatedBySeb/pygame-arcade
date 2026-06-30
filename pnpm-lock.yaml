@@ -36,6 +36,9 @@ importers:
         specifier: ^3.5.34
         version: 3.5.38(typescript@6.0.3)
     devDependencies:
+      '@types/emscripten':
+        specifier: ^1.41.5
+        version: 1.41.5
       '@types/node':
         specifier: ^24.12.3
         version: 24.13.2
