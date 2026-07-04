@@ -18,3 +18,8 @@ body {
 div {
   box-sizing: border-box;
 }
+
+/* PrimeVue customisations */
+.p-tree-empty-message {
+  padding: 0.25rem 0.5rem;
+}

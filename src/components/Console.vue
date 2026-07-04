@@ -47,7 +47,6 @@ watch(stderrRef, async () => {
 
 <style>
 #console {
-  border: var(--default-border);
   height: 100%;
   width: 100%;
 
@@ -57,37 +56,6 @@ watch(stderrRef, async () => {
     margin: 0;
     padding: 1em;
     width: 100%;
-  }
-
-  & .p-tablist {
-    color: var(--accent-color);
-    flex: 0 0 min-content;
-
-    & .p-tablist-tab-list {
-      border: none;
-      border-bottom: var(--default-border);
-
-      & button {
-        border: none;
-        border-right: var(--default-border);
-        padding: 0.25em 0.5em;
-
-        &.p-tab-active {
-          background-color: var(--accent-color);
-          color: white;
-        }
-      }
-    }
-  }
-
-  & .p-tabpanels {
-    flex: 1 0 1rem;
-    height: 1rem;
-
-    & .p-tabpanel {
-      height: 100%;
-      width: 100%;
-    }
   }
 }
 </style>

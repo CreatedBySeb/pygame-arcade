@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import Button from "primevue/button";
 import Tree, { type TreeSelectionKeys } from "primevue/tree";
 import type { TreeNode } from "primevue/treenode";
 import { computed, onMounted, ref } from "vue";
@@ -12,24 +13,26 @@ import {
 import { getBaseName, PROJECT_ROOT } from "../workerApi";
 
 function convertContentsToNodes(contents: DirectoryContents): TreeNode[] {
-  return Object.values(contents).sort(sortItems).map((item) => {
-    return {
-      children:
-        item.type === "directory"
-          ? convertContentsToNodes(item.children)
-          : undefined,
-      key: item.path,
-      label: getBaseName(item.path),
-      leaf: item.type !== "directory",
-      loading:
-        item.type === "directory" && loadingPaths.value.includes(item.path),
-    };
-  });
+  return Object.values(contents)
+    .sort(sortItems)
+    .map((item) => {
+      return {
+        children:
+          item.type === "directory"
+            ? convertContentsToNodes(item.children)
+            : undefined,
+        key: item.path,
+        label: getBaseName(item.path),
+        leaf: item.type !== "directory",
+        loading:
+          item.type === "directory" && loadingPaths.value.includes(item.path),
+      };
+    });
 }
 
 function sortItems(a: FSItem, b: FSItem): number {
   if (a.type !== b.type) {
-    return (a.type === "directory") ? -1 : 1;
+    return a.type === "directory" ? -1 : 1;
   } else {
     return a.path.localeCompare(b.path);
   }
@@ -60,7 +63,7 @@ onMounted(() => refresh());
   <div id="file-browser">
     <div id="file-browser-controls">
       <span>File Browser</span>
-      <button @click="refresh">Refresh</button>
+      <Button @click="refresh">Refresh</Button>
     </div>
     <Tree
       :loading="loading"
@@ -77,21 +80,12 @@ onMounted(() => refresh());
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 0.5rem;
 
   & #file-browser-controls {
     display: flex;
     flex: 0 0 1em;
     justify-content: space-between;
-  }
-
-  & .p-tree {
-    flex: 1 1 1em;
-
-    & div.p-tree-node-selected {
-      background-color: var(--accent-color);
-      color: white;
-    }
+    padding: 0.5rem;
   }
 }
 </style>

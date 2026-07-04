@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import Button from "primevue/button";
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
 import { interrupt, pyodideLoaded, runProgram } from "../runtime.ts";
 import Console from "./Console.vue";
 import Editor from "./Editor.vue";
-import Window from "./Window.vue";
 import FileBrowser from "./FileBrowser.vue";
+import Window from "./Window.vue";
 </script>
 
 <template>
@@ -30,10 +31,15 @@ import FileBrowser from "./FileBrowser.vue";
     <SplitterPanel :size="30" :min-size="20">
       <div>
         <div class="control-buttons">
-          <button :disabled="!pyodideLoaded" @click="runProgram">
+          <Button :disabled="!pyodideLoaded" @click="runProgram">
             {{ pyodideLoaded ? "Run it!" : "Loading Python..." }}
-          </button>
-          <button :disabled="!pyodideLoaded" @click="interrupt">Stop</button>
+          </Button>
+          <Button
+            severity="secondary"
+            :disabled="!pyodideLoaded"
+            @click="interrupt"
+            >Stop</Button
+          >
         </div>
         <Window></Window>
       </div>
@@ -52,10 +58,6 @@ import FileBrowser from "./FileBrowser.vue";
     gap: 1rem;
     justify-content: center;
     padding: 0.5rem;
-  }
-
-  & .p-splitter-gutter {
-    background-color: var(--accent-color);
   }
 }
 </style>
