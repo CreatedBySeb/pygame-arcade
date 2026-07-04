@@ -1,0 +1,10 @@
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/Inter-VariableFont_opsz_wght.ttf");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-style: italic;
+  src: url("fonts/Inter-Italic-VariableFont_opsz_wght.ttf");
+}

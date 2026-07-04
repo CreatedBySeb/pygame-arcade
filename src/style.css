@@ -1,7 +1,12 @@
+@import "inter.css";
+
 body {
+  /* Custom variables */
   --accent-color: gray;
   --default-border: .1em solid var(--accent-color);
 
+  /* Body attributes */
+  font-family: 'Inter', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
   margin: 0;
 }
 
