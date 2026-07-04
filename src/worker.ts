@@ -83,7 +83,7 @@ self.onmessage = async (event): Promise<void> => {
         }
 
         const path = joinPath([message.path, name]);
-        const { node } = pyodide.FS.lookupPath(path);
+        const { node } = pyodide.FS.lookupPath(path, {});
 
         if (node.isFolder) {
           directories.push(name);
