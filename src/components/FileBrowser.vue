@@ -1,9 +1,12 @@
 <script lang="ts" setup>
 import Button from "primevue/button";
+import Dialog from "primevue/dialog";
+import InputText from "primevue/inputtext";
 import Tree, { type TreeSelectionKeys } from "primevue/tree";
 import type { TreeNode } from "primevue/treenode";
 import { computed, onMounted, ref } from "vue";
 import {
+  createDir,
   fileSystem,
   loadingPaths,
   refreshContents,
@@ -38,6 +41,9 @@ function sortItems(a: FSItem, b: FSItem): number {
   }
 }
 
+const dialogVisible = ref<boolean>(false);
+const newFolderName = ref<string>("");
+
 const loading = computed<boolean>(() => {
   return Object.values(fileSystem.value).length == 0;
 });
@@ -47,6 +53,12 @@ const items = computed<TreeNode[]>(() => {
 });
 
 const selectedItems = ref<TreeSelectionKeys>({});
+
+function createFolder(_: SubmitEvent) {
+  createDir(newFolderName.value);
+  newFolderName.value = "";
+  dialogVisible.value = false;
+}
 
 function loadNode(node: TreeNode) {
   refreshContents(node.key);
@@ -63,7 +75,12 @@ onMounted(() => refresh());
   <div id="file-browser">
     <div id="file-browser-controls">
       <span>File Browser</span>
-      <Button @click="refresh">Refresh</Button>
+      <div class="spaced-buttons">
+        <Button :disabled="loading" @click="dialogVisible = true">
+          New Folder
+        </Button>
+        <Button :disabled="loading" @click="refresh">Refresh</Button>
+      </div>
     </div>
     <Tree
       :loading="loading"
@@ -72,6 +89,31 @@ onMounted(() => refresh());
       :value="items"
       @node-expand="loadNode"
     />
+
+    <Dialog
+      v-model:visible="dialogVisible"
+      dismissable-mask
+      modal
+      :draggable="false"
+      header="Create Folder"
+    >
+      <form @submit.prevent="createFolder">
+        <div class="form-field">
+          <label for="name">Name</label>
+          <InputText id="name" placeholder="dir" v-model="newFolderName" />
+        </div>
+        <div class="spaced-buttons">
+          <Button
+            severity="secondary"
+            variant="outlined"
+            @click="dialogVisible = false"
+          >
+            Cancel
+          </Button>
+          <Button type="submit">Create</Button>
+        </div>
+      </form>
+    </Dialog>
   </div>
 </template>
 

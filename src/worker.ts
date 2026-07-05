@@ -60,6 +60,29 @@ function post(message: OutgoingWorkerMessage): void {
   postMessage(message);
 }
 
+function listDir(pyodide: PyodideAPI, root: string): void {
+  const children = pyodide.FS.readdir(root);
+  const directories: string[] = [];
+  const files: string[] = [];
+
+  for (const name of children) {
+    if (name === "." || name === "..") {
+      continue;
+    }
+
+    const path = joinPath([root, name]);
+    const { node } = pyodide.FS.lookupPath(path, {});
+
+    if (node.isFolder) {
+      directories.push(name);
+    } else {
+      files.push(name);
+    }
+  }
+
+  post({ _type: "contentsList", path: root, directories, files });
+}
+
 self.onmessage = async (event): Promise<void> => {
   if (!pyodide) {
     pyodide = await pyodideReady;
@@ -72,27 +95,14 @@ self.onmessage = async (event): Promise<void> => {
   const message = event.data as IncomingWorkerMessage;
 
   switch (message._type) {
+    case "createDir": {
+      pyodide.FS.mkdirTree(message.path);
+      listDir(pyodide, message.path);
+      break;
+    }
+
     case "listContents": {
-      const children = pyodide.FS.readdir(message.path);
-      const directories: string[] = [];
-      const files: string[] = [];
-
-      for (const name of children) {
-        if (name === "." || name === "..") {
-          continue;
-        }
-
-        const path = joinPath([message.path, name]);
-        const { node } = pyodide.FS.lookupPath(path, {});
-
-        if (node.isFolder) {
-          directories.push(name);
-        } else {
-          files.push(name);
-        }
-      }
-
-      post({ _type: "contentsList", path: message.path, directories, files });
+      listDir(pyodide, message.path);
       break;
     }
 

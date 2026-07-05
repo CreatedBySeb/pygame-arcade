@@ -2,6 +2,12 @@
 
 import type { TypedArray } from "pyodide/ffi";
 
+export interface CreateDirMessage {
+  _type: "createDir";
+  /** The directory path to create */
+  path: string;
+}
+
 export interface ListContentsMessage {
   _type: "listContents";
   /** The directory path to list contents for */
@@ -31,6 +37,7 @@ export interface StopMessage {
 }
 
 export type IncomingWorkerMessage =
+  | CreateDirMessage
   | ListContentsMessage
   | RunMessage
   | SetCanvasMessage

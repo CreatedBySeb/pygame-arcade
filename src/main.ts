@@ -29,6 +29,11 @@ const customPreset = definePreset(Aura, {
       paddingX: "0.5rem",
       paddingY: "0.375rem",
     },
+    overlay: {
+      modal: {
+        padding: "1rem",
+      },
+    },
     colorScheme: {
       light: {
         surface: {

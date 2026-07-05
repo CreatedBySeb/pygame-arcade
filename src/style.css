@@ -3,6 +3,7 @@
 body {
   /* Custom variables */
   --accent-color: gray;
+  --background-color: white;
   --default-border: .1em solid var(--accent-color);
 
   /* Body attributes */
@@ -19,7 +20,31 @@ div {
   box-sizing: border-box;
 }
 
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-field {
+  align-items: center;
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  justify-items: center;
+}
+
+.spaced-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
 /* PrimeVue customisations */
+.p-dialog {
+  min-width: 24rem;
+}
+
 .p-tree-empty-message {
   padding: 0.25rem 0.5rem;
 }

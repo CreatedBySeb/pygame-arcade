@@ -123,6 +123,13 @@ export function clearOutput(): void {
 }
 
 /**
+ * Creates a directory in the file system
+ */
+export function createDir(path: string): void {
+  postMessage({ _type: "createDir", path: joinPath([PROJECT_ROOT, path]) });
+}
+
+/**
  * A read-only representation of the file system structure
  */
 export const fileSystem = readonly(fileStructureRef);

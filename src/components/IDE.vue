@@ -30,7 +30,7 @@ import Window from "./Window.vue";
     </SplitterPanel>
     <SplitterPanel :size="30" :min-size="20">
       <div>
-        <div class="control-buttons">
+        <div id="control-buttons" class="spaced-buttons">
           <Button :disabled="!pyodideLoaded" @click="runProgram">
             {{ pyodideLoaded ? "Run it!" : "Loading Python..." }}
           </Button>
@@ -53,10 +53,7 @@ import Window from "./Window.vue";
   height: 100%;
   width: 100%;
 
-  & .control-buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
+  & #control-buttons {
     padding: 0.5rem;
   }
 }
