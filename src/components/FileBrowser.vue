@@ -22,6 +22,7 @@ function convertContentsToNodes(contents: DirectoryContents): TreeNode[] {
           item.type === "directory"
             ? convertContentsToNodes(item.children)
             : undefined,
+        icon: item.type === "directory" ? "pi pi-folder" : "pi pi-file",
         key: item.path,
         label: getBaseName(item.path),
         leaf: item.type !== "directory",
