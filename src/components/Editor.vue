@@ -1,53 +1,36 @@
 <script setup lang="ts">
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import { python } from "@codemirror/lang-python";
-import {
-  bracketMatching,
-  defaultHighlightStyle,
-  indentOnInput,
-  indentUnit,
-  syntaxHighlighting,
-} from "@codemirror/language";
-import { searchKeymap } from "@codemirror/search";
-import { EditorState, Text } from "@codemirror/state";
-import {
-  EditorView,
-  highlightActiveLine,
-  keymap,
-  lineNumbers,
-} from "@codemirror/view";
-import { onMounted, useTemplateRef } from "vue";
-import { useProgram } from "../program";
+import { EditorView } from "@codemirror/view";
+import { onMounted, ref, useTemplateRef, watch } from "vue";
+import { focusedEditor, focusEditor } from "../editors";
+import { pyodideLoaded, readFile } from "../runtime";
+import { joinPath, PROJECT_ROOT } from "../workerApi";
 
 const containerRef = useTemplateRef("editor");
-const programRef = useProgram();
+const mountedRef = ref<boolean>(false);
 
-const updateListener = EditorView.updateListener.of((update) => {
-  if (!update.docChanged) return;
-  programRef.value = update.view.state.doc.toString();
+let view: EditorView | null = null;
+
+watch(focusedEditor, (state) => {
+  if (state && view && state !== view.state) {
+    view.setState(state);
+  }
 });
 
-let startState = EditorState.create({
-  doc: Text.of(programRef.value.split("\n")),
-  extensions: [
-    lineNumbers(),
-    history(),
-    indentOnInput(),
-    indentUnit.of("    "),
-    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-    bracketMatching(),
-    highlightActiveLine(),
-    keymap.of([...defaultKeymap, ...searchKeymap, ...historyKeymap]),
-    python(),
-    updateListener,
-  ],
+watch([mountedRef, pyodideLoaded], async () => {
+  if (!view && mountedRef.value && pyodideLoaded.value) {
+    const mainPath = joinPath([PROJECT_ROOT, "main.py"]);
+    const mainContents = await readFile(mainPath);
+    focusEditor(mainPath, mainContents);
+
+    view = new EditorView({
+      state: focusedEditor.value!,
+      parent: containerRef.value!,
+    });
+  }
 });
 
 onMounted(() => {
-  new EditorView({
-    state: startState,
-    parent: containerRef.value!,
-  });
+  mountedRef.value = true;
 });
 </script>
 
@@ -67,6 +50,7 @@ onMounted(() => {
   }
 
   & .cm-editor {
+    color: initial;
     height: 100%;
 
     & .cm-scroller {

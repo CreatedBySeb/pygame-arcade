@@ -1,6 +1,3 @@
-import { ref, type Ref } from "vue";
-
-const DEFAULT_PROGRAM = `\
 import asyncio
 
 import pygame
@@ -42,10 +39,3 @@ async def main() -> None:
 
 # Run it!
 main()
-`;
-
-const programRef = ref(DEFAULT_PROGRAM);
-
-export function useProgram(): Ref<string> {
-  return programRef;
-}

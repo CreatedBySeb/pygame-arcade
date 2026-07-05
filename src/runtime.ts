@@ -1,5 +1,4 @@
 import { computed, reactive, readonly, ref, type ComputedRef } from "vue";
-import { useProgram } from "./program";
 import {
   assertNever,
   joinPath,
@@ -11,6 +10,7 @@ import {
 
 const INTERRUPT_CLEAR: number = 0;
 const INTERRUPT_SET: number = 2;
+const READ_TIMEOUT: number = 5000;
 
 export type DirectoryContents = Record<string, FSItem>;
 
@@ -27,7 +27,11 @@ export interface File {
 
 export type FSItem = Directory | File;
 
+type PromiseFunctions<T> = [(value: T) => void, (reason: Error) => void];
+
 const interruptBuf = new Uint8Array(new SharedArrayBuffer(1));
+const pendingReads: Record<string, PromiseFunctions<string>> = {};
+
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const fileStructureRef = ref<DirectoryContents>({});
 const loadingPathsRef = ref<string[]>([]);
@@ -78,6 +82,16 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
       loadingPathsRef.value = loadingPathsRef.value.filter(
         (value) => value != message.path,
       );
+
+      break;
+    }
+
+    case "fileContents": {
+      const handlers = pendingReads[message.path];
+
+      if (handlers) {
+        handlers[0](message.contents);
+      }
 
       break;
     }
@@ -184,6 +198,19 @@ export const pyodideLoaded = computed((): boolean => {
   return readyRef.value;
 });
 
+/**
+ * Reads the contents of a file from the provided path asynchronously
+ * @param path The path to read from
+ * @returns A promise with the contents of the file
+ */
+export function readFile(path: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    pendingReads[path] = [resolve, reject];
+    setTimeout(reject, READ_TIMEOUT);
+    postMessage({ _type: "readFile", path });
+  });
+}
+
 /** Asynchronously updates file system data to display the contents of the provided path */
 export function refreshContents(path: string) {
   loadingPathsRef.value.push(path);
@@ -211,9 +238,8 @@ export async function runProgram(): Promise<void> {
   await interrupt();
   clearOutput();
   interruptBuf[0] = INTERRUPT_CLEAR;
-  const programRef = useProgram();
   startedRef.value = true;
-  postMessage({ _type: "run", code: programRef.value });
+  postMessage({ _type: "run" });
 }
 
 /**
@@ -270,6 +296,11 @@ function walkPath(path: string): Directory {
   }
 
   path = path.slice(PROJECT_ROOT.length);
+
+  if (path.endsWith("/")) {
+    path.slice(0, -1);
+  }
+
   const parts = splitPath(path);
 
   let dir: Directory = {

@@ -2,10 +2,12 @@
 import Button from "primevue/button";
 import Tree, { type TreeSelectionKeys } from "primevue/tree";
 import type { TreeNode } from "primevue/treenode";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { focusEditor } from "../editors.ts";
 import {
   fileSystem,
   loadingPaths,
+  readFile,
   refreshContents,
   type DirectoryContents,
   type FSItem,
@@ -53,6 +55,16 @@ const items = computed<TreeNode[]>(() => {
 });
 
 const selectedItems = ref<TreeSelectionKeys>({});
+
+watch(selectedItems, async (keys) => {
+  // We only allow 1 selection, so this is always the selected key
+  const path = Object.keys(keys).pop();
+
+  if (path) {
+    const contents = await readFile(path);
+    focusEditor(path, contents);
+  }
+});
 
 function loadNode(node: TreeNode) {
   refreshContents(node.key);

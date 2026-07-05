@@ -6,11 +6,7 @@ import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import { computed, ref } from "vue";
 import { createFile } from "../../runtime";
-
-const INITIAL_CONTENTS: string = `\
-def my_func() -> None:
-  # Do something
-`;
+import newFileTemplate from "../../templates/file.py?raw";
 
 const visible = defineModel<boolean>("visible", {
   required: true,
@@ -42,7 +38,7 @@ function createPythonFile(_: SubmitEvent): void {
     return;
   }
 
-  createFile(newFileName.value, INITIAL_CONTENTS);
+  createFile(newFileName.value, newFileTemplate);
   newFileName.value = "";
   visible.value = false;
 }

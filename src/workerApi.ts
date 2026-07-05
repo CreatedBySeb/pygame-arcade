@@ -22,10 +22,14 @@ export interface ListContentsMessage {
   path: string;
 }
 
+export interface ReadFileMessage {
+  _type: "readFile";
+  /** The file path to read from */
+  path: string;
+}
+
 export interface RunMessage {
   _type: "run";
-  /** The text of the program to run */
-  code: string;
 }
 
 export interface SetCanvasMessage {
@@ -48,6 +52,7 @@ export type IncomingWorkerMessage =
   | CreateDirMessage
   | CreateFileMessage
   | ListContentsMessage
+  | ReadFileMessage
   | RunMessage
   | SetCanvasMessage
   | SetInterruptMessage
@@ -63,6 +68,14 @@ export interface ContentsListMessage {
   files: string[];
   /** The path to the directory the contents are listed for */
   path: string;
+}
+
+export interface FileContentsMessage {
+  _type: "fileContents";
+  /** The path of the file that was read */
+  path: string;
+  /** The contents read from the specified path */
+  contents: string;
 }
 
 export interface ReadyMessage {
@@ -87,6 +100,7 @@ export interface TaskStartedMessage {
 
 export type OutgoingWorkerMessage =
   | ContentsListMessage
+  | FileContentsMessage
   | ReadyMessage
   | StderrMessage
   | StdoutMessage

@@ -1,4 +1,5 @@
 import { loadPyodide, type PyodideAPI } from "pyodide";
+import mainTemplate from "./templates/main.py?raw";
 import {
   assertNever,
   joinPath,
@@ -32,10 +33,7 @@ const pyodideReady = loadPyodide({
 
   // Create 'project' directory
   pyo.FS.mkdir(PROJECT_ROOT);
-  pyo.FS.writeFile(
-    joinPath([PROJECT_ROOT, "main.py"]),
-    `print("Hello, world!")`,
-  );
+  pyo.FS.writeFile(joinPath([PROJECT_ROOT, "main.py"]), mainTemplate);
 
   // Alert main thread we are ready to run
   post({ _type: "ready" });
@@ -117,9 +115,20 @@ self.onmessage = async (event): Promise<void> => {
       break;
     }
 
+    case "readFile": {
+      const contents = pyodide.FS.readFile(message.path, { encoding: "utf8" });
+      post({ _type: "fileContents", path: message.path, contents });
+      break;
+    }
+
     case "run": {
       // FIXME: Handle indirectly started tasks?
-      const maybeCoroutine = pyodide.runPython(message.code);
+      const mainContents = pyodide.FS.readFile(
+        joinPath([PROJECT_ROOT, "main.py"]),
+        { encoding: "utf8" },
+      );
+
+      const maybeCoroutine = pyodide.runPython(mainContents);
 
       if (maybeCoroutine && maybeCoroutine.type === "coroutine") {
         const webloop = pyodide.runPython(
