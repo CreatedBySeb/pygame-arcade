@@ -5,19 +5,24 @@ import Dialog from "primevue/dialog";
 import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import { computed, ref } from "vue";
-import { createDir } from "../../runtime";
+import { createFile } from "../../runtime";
+
+const INITIAL_CONTENTS: string = `\
+def my_func() -> None:
+  # Do something
+`;
 
 const visible = defineModel<boolean>("visible", {
   required: true,
   default: false,
 });
 
-const newFolderName = ref<string>("");
+const newFileName = ref<string>("");
 
 const isValid = computed<boolean>(() => {
-  const value = newFolderName.value;
+  const value = newFileName.value;
 
-  if (value.length < 1 || value.includes(" ") || value.endsWith(".py")) {
+  if (value.length < 1 || value.includes(" ") || !value.endsWith(".py")) {
     return false;
   }
 
@@ -25,20 +30,20 @@ const isValid = computed<boolean>(() => {
 });
 
 const hintSeverity = computed<MessageProps["severity"]>(() => {
-  if (!newFolderName.value || isValid.value) {
+  if (!newFileName.value || isValid.value) {
     return "secondary";
   } else {
     return "error";
   }
 });
 
-function createFolder(_: SubmitEvent): void {
+function createPythonFile(_: SubmitEvent): void {
   if (!isValid.value) {
     return;
   }
 
-  createDir(newFolderName.value);
-  newFolderName.value = "";
+  createFile(newFileName.value, INITIAL_CONTENTS);
+  newFileName.value = "";
   visible.value = false;
 }
 </script>
@@ -49,20 +54,20 @@ function createFolder(_: SubmitEvent): void {
     dismissable-mask
     modal
     :draggable="false"
-    header="Create Folder"
+    header="Create Python File"
   >
-    <form @submit.prevent="createFolder">
+    <form @submit.prevent="createPythonFile">
       <div class="form-field">
         <label for="name">Name</label>
         <InputText
           id="name"
-          placeholder="dir"
-          v-model="newFolderName"
-          :invalid="newFolderName !== '' && !isValid"
+          placeholder="file.py"
+          v-model="newFileName"
+          :invalid="newFileName !== '' && !isValid"
         />
       </div>
       <Message size="small" :severity="hintSeverity" variant="simple">
-        Folder names must not contain spaces or end with <code>.py</code>.
+        File names must not contain spaces and must end with <code>.py</code>.
       </Message>
       <div class="spaced-buttons">
         <Button

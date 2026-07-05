@@ -3,6 +3,7 @@ import {
   assertNever,
   joinPath,
   PROJECT_ROOT,
+  splitPath,
   type IncomingWorkerMessage,
   type OutgoingWorkerMessage,
 } from "./workerApi";
@@ -98,6 +99,16 @@ self.onmessage = async (event): Promise<void> => {
     case "createDir": {
       pyodide.FS.mkdirTree(message.path);
       listDir(pyodide, message.path);
+      break;
+    }
+
+    case "createFile": {
+      const parts = splitPath(message.path);
+      const parent = "/" + joinPath(parts.slice(0, -1));
+
+      pyodide.FS.mkdirTree(parent);
+      pyodide.FS.writeFile(message.path, message.contents);
+      listDir(pyodide, parent);
       break;
     }
 

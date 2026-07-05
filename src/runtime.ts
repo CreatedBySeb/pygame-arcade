@@ -123,10 +123,24 @@ export function clearOutput(): void {
 }
 
 /**
- * Creates a directory in the file system
+ * Creates a directory in the file system, automatically creating parents
+ * @param path The path to create the directory at
  */
 export function createDir(path: string): void {
   postMessage({ _type: "createDir", path: joinPath([PROJECT_ROOT, path]) });
+}
+
+/**
+ * Creates a file in the file system, automatically creating parent directories
+ * @param path The path to create the file at
+ * @param contents The initial contents of the file
+ */
+export function createFile(path: string, contents: string): void {
+  postMessage({
+    _type: "createFile",
+    path: joinPath([PROJECT_ROOT, path]),
+    contents,
+  });
 }
 
 /**

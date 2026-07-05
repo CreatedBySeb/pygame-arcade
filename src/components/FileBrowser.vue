@@ -12,6 +12,7 @@ import {
 } from "../runtime";
 import { getBaseName, PROJECT_ROOT } from "../workerApi";
 import CreateFolder from "./dialogs/CreateFolder.vue";
+import CreatePythonFile from "./dialogs/CreatePythonFile.vue";
 
 function convertContentsToNodes(contents: DirectoryContents): TreeNode[] {
   return Object.values(contents)
@@ -40,7 +41,8 @@ function sortItems(a: FSItem, b: FSItem): number {
   }
 }
 
-const dialogVisible = ref<boolean>(false);
+const fileDialogVisible = ref<boolean>(false);
+const folderDialogVisible = ref<boolean>(false);
 
 const loading = computed<boolean>(() => {
   return Object.values(fileSystem.value).length == 0;
@@ -70,9 +72,15 @@ onMounted(() => refresh());
       <div class="spaced-buttons">
         <Button
           :disabled="loading"
+          icon="pi pi-file-plus"
+          aria-label="Create Python File"
+          @click="fileDialogVisible = true"
+        />
+        <Button
+          :disabled="loading"
           icon="pi pi-folder-plus"
           aria-label="Create Folder"
-          @click="dialogVisible = true"
+          @click="folderDialogVisible = true"
         />
         <Button
           :disabled="loading"
@@ -90,7 +98,8 @@ onMounted(() => refresh());
       @node-expand="loadNode"
     />
 
-    <CreateFolder v-model:visible="dialogVisible" />
+    <CreatePythonFile v-model:visible="fileDialogVisible" />
+    <CreateFolder v-model:visible="folderDialogVisible" />
   </div>
 </template>
 

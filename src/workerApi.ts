@@ -8,6 +8,14 @@ export interface CreateDirMessage {
   path: string;
 }
 
+export interface CreateFileMessage {
+  _type: "createFile";
+  /** The contents of the created file */
+  contents: string;
+  /** The file path to create */
+  path: string;
+}
+
 export interface ListContentsMessage {
   _type: "listContents";
   /** The directory path to list contents for */
@@ -38,6 +46,7 @@ export interface StopMessage {
 
 export type IncomingWorkerMessage =
   | CreateDirMessage
+  | CreateFileMessage
   | ListContentsMessage
   | RunMessage
   | SetCanvasMessage
