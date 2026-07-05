@@ -61,9 +61,11 @@ const customPreset = definePreset(Aura, {
     tree: {
       node: {
         borderRadius: "0",
+        padding: "0.25rem",
       },
       root: {
         gap: "0",
+        indent: "0.5rem",
         padding: "0",
       },
     },
