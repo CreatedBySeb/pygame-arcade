@@ -100,6 +100,11 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
       break;
     }
 
+    case "finished": {
+      startedRef.value = false;
+      break;
+    }
+
     case "ready": {
       readyRef.value = true;
       postMessage({ _type: "setInterrupt", buffer: interruptBuf });

@@ -78,6 +78,10 @@ export interface FileContentsMessage {
   contents: string;
 }
 
+export interface FinishedMessage {
+  _type: "finished";
+}
+
 export interface ReadyMessage {
   _type: "ready";
 }
@@ -101,6 +105,7 @@ export interface TaskStartedMessage {
 export type OutgoingWorkerMessage =
   | ContentsListMessage
   | FileContentsMessage
+  | FinishedMessage
   | ReadyMessage
   | StderrMessage
   | StdoutMessage

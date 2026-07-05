@@ -137,6 +137,8 @@ self.onmessage = async (event): Promise<void> => {
 
         task = webloop.create_task(maybeCoroutine);
         post({ _type: "taskStarted" });
+      } else {
+        post({ _type: "finished" });
       }
 
       break;
