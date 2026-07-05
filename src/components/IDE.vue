@@ -1,13 +1,13 @@
 <script setup lang="ts">
+import Console from "@/components/Console.vue";
+import Editor from "@/components/Editor.vue";
+import FileBrowser from "@/components/FileBrowser.vue";
+import Window from "@/components/Window.vue";
+import { interrupt, pyodideLoaded, runProgram } from "@/runtime.ts";
 import Button from "primevue/button";
 import Message from "primevue/message";
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
-import { interrupt, pyodideLoaded, runProgram } from "../runtime.ts";
-import Console from "./Console.vue";
-import Editor from "./Editor.vue";
-import FileBrowser from "./FileBrowser.vue";
-import Window from "./Window.vue";
 </script>
 
 <template>

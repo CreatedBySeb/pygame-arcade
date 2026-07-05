@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { useOutput } from "@/runtime";
 import Tab from "primevue/tab";
 import TabList from "primevue/tablist";
 import TabPanel from "primevue/tabpanel";
 import TabPanels from "primevue/tabpanels";
 import Tabs from "primevue/tabs";
 import { nextTick, useTemplateRef, watch, type Ref } from "vue";
-import { useOutput } from "../runtime";
 
 const stderrEl = useTemplateRef("stderr");
 const stdoutEl = useTemplateRef("stdout");

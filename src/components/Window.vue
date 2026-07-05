@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { setCanvas } from "@/runtime";
 import { onMounted, useTemplateRef } from "vue";
-import { setCanvas } from "../runtime";
 
 const canvasRef = useTemplateRef("canvas");
 

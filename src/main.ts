@@ -1,12 +1,12 @@
+import App from "@/App.vue";
+import "@/runtime.ts"; // Start worker thread early
+import "@/style.css";
 import { definePreset } from "@primeuix/themes";
 import Aura from "@primeuix/themes/aura";
 import type { AuraBaseDesignTokens } from "@primeuix/themes/aura/base";
 import type { Preset } from "@primeuix/themes/types";
 import PrimeVue from "primevue/config";
 import { createApp } from "vue";
-import App from "./App.vue";
-import "./runtime.ts"; // Start worker thread early
-import "./style.css";
 
 const app = createApp(App);
 

@@ -1,9 +1,7 @@
 <script lang="ts" setup>
-import Button from "primevue/button";
-import Tree, { type TreeSelectionKeys } from "primevue/tree";
-import type { TreeNode } from "primevue/treenode";
-import { computed, onMounted, ref, watch } from "vue";
-import { focusEditor } from "../editors.ts";
+import CreateFolder from "@/components/dialogs/CreateFolder.vue";
+import CreatePythonFile from "@/components/dialogs/CreatePythonFile.vue";
+import { focusEditor } from "@/editors";
 import {
   fileSystem,
   loadingPaths,
@@ -11,10 +9,12 @@ import {
   refreshContents,
   type DirectoryContents,
   type FSItem,
-} from "../runtime";
-import { getBaseName, PROJECT_ROOT } from "../workerApi";
-import CreateFolder from "./dialogs/CreateFolder.vue";
-import CreatePythonFile from "./dialogs/CreatePythonFile.vue";
+} from "@/runtime";
+import { getBaseName, PROJECT_ROOT } from "@/workerApi";
+import Button from "primevue/button";
+import Tree, { type TreeSelectionKeys } from "primevue/tree";
+import type { TreeNode } from "primevue/treenode";
+import { computed, onMounted, ref, watch } from "vue";
 
 function convertContentsToNodes(contents: DirectoryContents): TreeNode[] {
   return Object.values(contents)

@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { createDir } from "@/runtime";
 import type { MessageProps } from "primevue";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import { computed, ref } from "vue";
-import { createDir } from "../../runtime";
 
 const visible = defineModel<boolean>("visible", {
   required: true,

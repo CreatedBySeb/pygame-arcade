@@ -1,3 +1,5 @@
+import { createFile } from "@/runtime";
+import { PROJECT_ROOT } from "@/workerApi";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { python } from "@codemirror/lang-python";
 import {
@@ -16,8 +18,6 @@ import {
   lineNumbers,
 } from "@codemirror/view";
 import { computed, readonly, ref, shallowReactive } from "vue";
-import { createFile } from "./runtime";
-import { PROJECT_ROOT } from "./workerApi";
 
 const editorsRef = shallowReactive<Record<string, EditorState>>({});
 const focusedPathRef = ref<string | null>(null);

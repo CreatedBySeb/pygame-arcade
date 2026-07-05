@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { focusedEditor, focusEditor } from "@/editors";
+import { pyodideLoaded, readFile } from "@/runtime";
+import { joinPath, PROJECT_ROOT } from "@/workerApi";
 import { EditorView } from "@codemirror/view";
 import { onMounted, ref, useTemplateRef, watch } from "vue";
-import { focusedEditor, focusEditor } from "../editors";
-import { pyodideLoaded, readFile } from "../runtime";
-import { joinPath, PROJECT_ROOT } from "../workerApi";
 
 const containerRef = useTemplateRef("editor");
 const mountedRef = ref<boolean>(false);

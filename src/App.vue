@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import IDE from "./components/IDE.vue";
+import IDE from "@/components/IDE.vue";
 </script>
 
 <template>

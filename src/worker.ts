@@ -1,5 +1,4 @@
-import { loadPyodide, type PyodideAPI } from "pyodide";
-import mainTemplate from "./templates/main.py?raw";
+import mainTemplate from "@/templates/main.py?raw";
 import {
   assertNever,
   joinPath,
@@ -7,7 +6,8 @@ import {
   splitPath,
   type IncomingWorkerMessage,
   type OutgoingWorkerMessage,
-} from "./workerApi";
+} from "@/workerApi";
+import { loadPyodide, type PyodideAPI } from "pyodide";
 
 interface TaskLike {
   cancel(msg?: string): void;
