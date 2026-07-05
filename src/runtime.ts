@@ -72,10 +72,14 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
       }
 
       for (const name of message.directories) {
+        const existing = dir.children[name];
+        const children =
+          existing?.type === "directory" ? existing.children : {};
+
         dir.children[name] = reactive({
           type: "directory",
           path: joinPath([message.path, name]),
-          children: {},
+          children,
         });
       }
 
