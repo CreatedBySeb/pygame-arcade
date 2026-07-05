@@ -67,10 +67,18 @@ onMounted(() => refresh());
     <div id="file-browser-controls">
       <span>File Browser</span>
       <div class="spaced-buttons">
-        <Button :disabled="loading" @click="dialogVisible = true">
-          New Folder
-        </Button>
-        <Button :disabled="loading" @click="refresh">Refresh</Button>
+        <Button
+          :disabled="loading"
+          icon="pi pi-folder-plus"
+          aria-label="Create Folder"
+          @click="dialogVisible = true"
+        />
+        <Button
+          :disabled="loading"
+          icon="pi pi-sync"
+          aria-label="Refresh Files"
+          @click="refresh"
+        />
       </div>
     </div>
     <Tree

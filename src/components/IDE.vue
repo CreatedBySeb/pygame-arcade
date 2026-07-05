@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Button from "primevue/button";
+import Message from "primevue/message";
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
 import { interrupt, pyodideLoaded, runProgram } from "../runtime.ts";
@@ -31,16 +32,23 @@ import Window from "./Window.vue";
     <SplitterPanel :size="30" :min-size="20">
       <div>
         <div id="control-buttons" class="spaced-buttons">
-          <Button :disabled="!pyodideLoaded" @click="runProgram">
-            {{ pyodideLoaded ? "Run it!" : "Loading Python..." }}
-          </Button>
+          <Button
+            :disabled="!pyodideLoaded"
+            icon="pi pi-play"
+            label="Run it!"
+            @click="runProgram"
+          />
           <Button
             severity="secondary"
             :disabled="!pyodideLoaded"
+            icon="pi pi-stop"
+            label="Stop"
             @click="interrupt"
-            >Stop</Button
-          >
+          />
         </div>
+        <Message v-show="!pyodideLoaded" severity="secondary">
+          Loading Python...
+        </Message>
         <Window></Window>
       </div>
     </SplitterPanel>
@@ -55,6 +63,10 @@ import Window from "./Window.vue";
 
   & #control-buttons {
     padding: 0.5rem;
+  }
+
+  & .p-message {
+    margin: 0.5rem;
   }
 }
 </style>
