@@ -33,6 +33,9 @@ const pyodideReady = loadPyodide({
 
   // Create 'project' directory
   pyo.FS.mkdir(PROJECT_ROOT);
+  pyo.FS.chdir(PROJECT_ROOT);
+
+  // Initialise project files
   pyo.FS.writeFile(joinPath([PROJECT_ROOT, "main.py"]), mainTemplate);
 
   // Alert main thread we are ready to run
