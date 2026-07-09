@@ -20,12 +20,12 @@ export interface Directory {
   type: "directory";
 }
 
-export interface File {
+export interface ProjectFile {
   path: string;
   type: "file";
 }
 
-export type FSItem = Directory | File;
+export type FSItem = Directory | ProjectFile;
 
 type PromiseFunctions<T> = [(value: T) => void, (reason: Error) => void];
 
@@ -249,6 +249,14 @@ export async function runProgram(): Promise<void> {
   interruptBuf[0] = INTERRUPT_CLEAR;
   startedRef.value = true;
   postMessage({ _type: "run" });
+}
+
+/**
+ * Add user-provided files to the file system
+ * @param files The uploaded files to add to the file system
+ */
+export function uploadFiles(files: File[]) {
+  postMessage({ _type: "uploadFiles", files });
 }
 
 /**

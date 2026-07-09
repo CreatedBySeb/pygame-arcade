@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import CreateFolder from "@/components/dialogs/CreateFolder.vue";
 import CreatePythonFile from "@/components/dialogs/CreatePythonFile.vue";
+import UploadFile from "@/components/dialogs/UploadFile.vue";
 import { focusEditor } from "@/editors";
 import {
   fileSystem,
@@ -45,6 +46,7 @@ function sortItems(a: FSItem, b: FSItem): number {
 
 const fileDialogVisible = ref<boolean>(false);
 const folderDialogVisible = ref<boolean>(false);
+const uploadDialogVisible = ref<boolean>(false);
 
 const loading = computed<boolean>(() => {
   return Object.values(fileSystem.value).length == 0;
@@ -84,6 +86,12 @@ onMounted(() => refresh());
       <div class="spaced-buttons">
         <Button
           :disabled="loading"
+          icon="pi pi-upload"
+          aria-label="Upload file"
+          @click="uploadDialogVisible = true"
+        />
+        <Button
+          :disabled="loading"
           icon="pi pi-file-plus"
           aria-label="Create Python File"
           @click="fileDialogVisible = true"
@@ -112,6 +120,7 @@ onMounted(() => refresh());
 
     <CreatePythonFile v-model:visible="fileDialogVisible" />
     <CreateFolder v-model:visible="folderDialogVisible" />
+    <UploadFile v-model:visible="uploadDialogVisible" />
   </div>
 </template>
 

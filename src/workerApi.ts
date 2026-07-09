@@ -48,6 +48,12 @@ export interface StopMessage {
   _type: "stop";
 }
 
+export interface UploadFilesMessage {
+  _type: "uploadFiles";
+  /** The files that should be uploaded */
+  files: File[];
+}
+
 export type IncomingWorkerMessage =
   | CreateDirMessage
   | CreateFileMessage
@@ -56,7 +62,8 @@ export type IncomingWorkerMessage =
   | RunMessage
   | SetCanvasMessage
   | SetInterruptMessage
-  | StopMessage;
+  | StopMessage
+  | UploadFilesMessage;
 
 // --- Outgoing Messages ---
 
