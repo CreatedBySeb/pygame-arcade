@@ -14,9 +14,22 @@ import {
 import { getBaseName, PROJECT_ROOT } from "@/workerApi";
 import Button from "primevue/button";
 import ButtonGroup from "primevue/buttongroup";
-import Tree, { type TreeSelectionKeys } from "primevue/tree";
+import Tree from "primevue/tree";
 import type { TreeNode } from "primevue/treenode";
 import { computed, onMounted, ref, watch } from "vue";
+
+// Common text file extensions the user may want to use or read
+const TEXT_EXTS = [
+  "py",
+  "txt",
+  "ini",
+  "csv",
+  "tsv",
+  "json",
+  "yaml",
+  "yml",
+  "toml",
+];
 
 function convertContentsToNodes(contents: DirectoryContents): TreeNode[] {
   return Object.values(contents)
@@ -57,13 +70,20 @@ const items = computed<TreeNode[]>(() => {
   return convertContentsToNodes(fileSystem.value);
 });
 
-const selectedItems = ref<TreeSelectionKeys>({});
+const selectedItems = ref<Record<string, TreeNode>>({});
 
-watch(selectedItems, async (keys) => {
+watch(selectedItems, async (selected) => {
   // We only allow 1 selection, so this is always the selected key
-  const path = Object.keys(keys).pop();
+  const path = Object.keys(selected).pop();
 
-  if (path) {
+  if (!path) {
+    return;
+  }
+
+  const seperated = path.split(".");
+  const maybeExt = seperated[seperated.length - 1];
+
+  if (TEXT_EXTS.includes(maybeExt)) {
     const contents = await readFile(path);
     focusEditor(path, contents);
   }
