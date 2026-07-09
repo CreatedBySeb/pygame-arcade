@@ -13,6 +13,7 @@ import {
 } from "@/runtime";
 import { getBaseName, PROJECT_ROOT } from "@/workerApi";
 import Button from "primevue/button";
+import ButtonGroup from "primevue/buttongroup";
 import Tree, { type TreeSelectionKeys } from "primevue/tree";
 import type { TreeNode } from "primevue/treenode";
 import { computed, onMounted, ref, watch } from "vue";
@@ -83,7 +84,7 @@ onMounted(() => refresh());
   <div id="file-browser">
     <div id="file-browser-controls">
       <span>File Browser</span>
-      <div class="spaced-buttons">
+      <ButtonGroup>
         <Button
           :disabled="loading"
           icon="pi pi-upload"
@@ -108,7 +109,7 @@ onMounted(() => refresh());
           aria-label="Refresh Files"
           @click="refresh"
         />
-      </div>
+      </ButtonGroup>
     </div>
     <Tree
       :loading="loading"
