@@ -255,8 +255,8 @@ export async function runProgram(): Promise<void> {
  * Add user-provided files to the file system
  * @param files The uploaded files to add to the file system
  */
-export function uploadFiles(files: File[]) {
-  postMessage({ _type: "uploadFiles", files });
+export function uploadFiles(basePath: string, files: File[]) {
+  postMessage({ _type: "uploadFiles", basePath, files });
 }
 
 /**

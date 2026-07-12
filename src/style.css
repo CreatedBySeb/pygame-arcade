@@ -35,6 +35,10 @@ form {
   justify-items: center;
 }
 
+.margin-b {
+  margin-bottom: 1rem;
+}
+
 .spaced-buttons {
   display: flex;
   gap: 1rem;

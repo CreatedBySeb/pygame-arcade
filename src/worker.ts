@@ -204,13 +204,13 @@ self.onmessage = async (event): Promise<void> => {
       await Promise.all(
         message.files.map(async (file) => {
           pyo.FS.writeFile(
-            joinPath([PROJECT_ROOT, file.name]),
+            joinPath([message.basePath, file.name]),
             await file.bytes(),
           );
         }),
       );
 
-      listDir(pyo, PROJECT_ROOT);
+      listDir(pyo, message.basePath);
 
       break;
     }

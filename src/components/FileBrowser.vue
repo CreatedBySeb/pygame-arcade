@@ -15,6 +15,7 @@ import {
   getBaseName,
   getExtension,
   PROJECT_ROOT,
+  splitPath,
   TEXT_EXTS,
 } from "@/workerApi";
 import Button from "primevue/button";
@@ -67,6 +68,24 @@ const items = computed<TreeNode[]>(() => {
 
 const expandedKeys = ref<TreeExpandedKeys>({});
 const selectedItems = ref<TreeSelectionKeys>({});
+
+// Either the selected directory or the parent of the selected file
+const selectedDir = computed<string>(() => {
+  const selectedItem = Object.keys(selectedItems.value).pop();
+  if (!selectedItem) {
+    // If there's no selection, use the project root
+    return PROJECT_ROOT;
+  }
+
+  const ext = getExtension(selectedItem);
+  if (ext) {
+    // If it has an extension, we assume its a file and get the parent directory
+    return "/" + splitPath(selectedItem).slice(0, -1).join("/");
+  }
+
+  // Otherwise, it's a directory and we return as is
+  return selectedItem;
+});
 
 async function onSelect(node: TreeNode) {
   const path = node.key;
@@ -167,7 +186,10 @@ onMounted(() => refresh());
 
     <CreateFile v-model:visible="fileDialogVisible" />
     <CreateFolder v-model:visible="folderDialogVisible" />
-    <UploadFile v-model:visible="uploadDialogVisible" />
+    <UploadFile
+      v-model:visible="uploadDialogVisible"
+      :base-path="selectedDir"
+    />
   </div>
 </template>
 

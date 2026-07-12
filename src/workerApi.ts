@@ -50,6 +50,8 @@ export interface StopMessage {
 
 export interface UploadFilesMessage {
   _type: "uploadFiles";
+  /** The path the files should be uploaded to */
+  basePath: string;
   /** The files that should be uploaded */
   files: File[];
 }
