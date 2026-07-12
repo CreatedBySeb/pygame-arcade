@@ -120,6 +120,19 @@ export type OutgoingWorkerMessage =
 
 // --- Helpers ---
 
+/** The file extensions for editable text files */
+export const TEXT_EXTS = [
+  "py",
+  "txt",
+  "ini",
+  "csv",
+  "tsv",
+  "json",
+  "yaml",
+  "yml",
+  "toml",
+];
+
 /** The root directory in the filesystem where project files are stored */
 export const PROJECT_ROOT = "/project";
 
@@ -170,4 +183,20 @@ export function splitPath(path: string): string[] {
   }
 
   return path.split("/");
+}
+
+/**
+ * Get the extension of a file from its path
+ * @param path A path to a file
+ * @returns The extension if one was found, otherwise null
+ */
+export function getExtension(path: string): string | null {
+  const separated = path.split(".");
+
+  // No extension
+  if (separated.length < 2) {
+    return null;
+  }
+
+  return separated[separated.length - 1];
 }

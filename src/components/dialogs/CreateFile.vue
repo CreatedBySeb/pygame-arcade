@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { createFile } from "@/runtime";
-import newFileTemplate from "@/templates/file.py?raw";
+import newPythonTemplate from "@/templates/file.py?raw";
+import { getExtension, TEXT_EXTS } from "@/workerApi";
 import type { MessageProps } from "primevue";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
@@ -15,10 +16,23 @@ const visible = defineModel<boolean>("visible", {
 
 const newFileName = ref<string>("");
 
+const friendlyExtensions = TEXT_EXTS.map(
+  (ext) => `<code>.${ext}</code>`,
+).reduce((prev, curr, i) => {
+  if (i == 0) return curr;
+
+  const connector = i < TEXT_EXTS.length - 1 ? ", " : " or ";
+  return prev + connector + curr;
+});
+
 const isValid = computed<boolean>(() => {
   const value = newFileName.value;
 
-  if (value.length < 1 || value.includes(" ") || !value.endsWith(".py")) {
+  if (
+    value.length < 1 ||
+    value.includes(" ") ||
+    !TEXT_EXTS.includes(getExtension(value) ?? "")
+  ) {
     return false;
   }
 
@@ -33,12 +47,14 @@ const hintSeverity = computed<MessageProps["severity"]>(() => {
   }
 });
 
-function createPythonFile(_: SubmitEvent): void {
+function createTextFile(_: SubmitEvent): void {
   if (!isValid.value) {
     return;
   }
 
-  createFile(newFileName.value, newFileTemplate);
+  const template = newFileName.value.endsWith(".py") ? newPythonTemplate : "";
+
+  createFile(newFileName.value, template);
   newFileName.value = "";
   visible.value = false;
 }
@@ -50,9 +66,9 @@ function createPythonFile(_: SubmitEvent): void {
     dismissable-mask
     modal
     :draggable="false"
-    header="Create Python File"
+    header="Create Text File"
   >
-    <form @submit.prevent="createPythonFile">
+    <form @submit.prevent="createTextFile">
       <div class="form-field">
         <label for="name">Name</label>
         <InputText
@@ -63,7 +79,8 @@ function createPythonFile(_: SubmitEvent): void {
         />
       </div>
       <Message size="small" :severity="hintSeverity" variant="simple">
-        File names must not contain spaces and must end with <code>.py</code>.
+        File names must not contain spaces and must end with
+        <span v-html="friendlyExtensions"></span>.
       </Message>
       <div class="spaced-buttons">
         <Button

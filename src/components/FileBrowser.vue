@@ -1,6 +1,6 @@
 <script lang="ts" setup>
+import CreateFile from "@/components/dialogs/CreateFile.vue";
 import CreateFolder from "@/components/dialogs/CreateFolder.vue";
-import CreatePythonFile from "@/components/dialogs/CreatePythonFile.vue";
 import UploadFile from "@/components/dialogs/UploadFile.vue";
 import { focusEditor } from "@/editors";
 import {
@@ -11,25 +11,17 @@ import {
   type DirectoryContents,
   type FSItem,
 } from "@/runtime";
-import { getBaseName, PROJECT_ROOT } from "@/workerApi";
+import {
+  getBaseName,
+  getExtension,
+  PROJECT_ROOT,
+  TEXT_EXTS,
+} from "@/workerApi";
 import Button from "primevue/button";
 import ButtonGroup from "primevue/buttongroup";
 import Tree from "primevue/tree";
 import type { TreeNode } from "primevue/treenode";
 import { computed, onMounted, ref, watch } from "vue";
-
-// Common text file extensions the user may want to use or read
-const TEXT_EXTS = [
-  "py",
-  "txt",
-  "ini",
-  "csv",
-  "tsv",
-  "json",
-  "yaml",
-  "yml",
-  "toml",
-];
 
 function convertContentsToNodes(contents: DirectoryContents): TreeNode[] {
   return Object.values(contents)
@@ -80,10 +72,9 @@ watch(selectedItems, async (selected) => {
     return;
   }
 
-  const seperated = path.split(".");
-  const maybeExt = seperated[seperated.length - 1];
+  const extension = getExtension(path);
 
-  if (TEXT_EXTS.includes(maybeExt)) {
+  if (TEXT_EXTS.includes(extension ?? "")) {
     const contents = await readFile(path);
     focusEditor(path, contents);
   }
@@ -114,7 +105,7 @@ onMounted(() => refresh());
         <Button
           :disabled="loading"
           icon="pi pi-file-plus"
-          aria-label="Create Python File"
+          aria-label="Create Text File"
           @click="fileDialogVisible = true"
         />
         <Button
@@ -139,7 +130,7 @@ onMounted(() => refresh());
       @node-expand="loadNode"
     />
 
-    <CreatePythonFile v-model:visible="fileDialogVisible" />
+    <CreateFile v-model:visible="fileDialogVisible" />
     <CreateFolder v-model:visible="folderDialogVisible" />
     <UploadFile v-model:visible="uploadDialogVisible" />
   </div>
