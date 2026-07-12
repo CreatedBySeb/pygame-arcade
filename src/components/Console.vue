@@ -50,6 +50,11 @@ watch(stderrRef, async () => {
   height: 100%;
   width: 100%;
 
+  & .p-tabpanels,
+  & .p-tabpanel {
+    height: 100%;
+  }
+
   & pre {
     height: 100%;
     overflow: scroll;
