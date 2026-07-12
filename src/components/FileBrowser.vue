@@ -68,10 +68,8 @@ const items = computed<TreeNode[]>(() => {
 const expandedKeys = ref<TreeExpandedKeys>({});
 const selectedItems = ref<TreeSelectionKeys>({});
 
-// Focus the editor when the selection changes
-watch(selectedItems, async (selected) => {
-  // We only allow 1 selection, so this is always the selected key
-  const path = Object.keys(selected).pop();
+async function onSelect(node: TreeNode) {
+  const path = node.key;
 
   // If there is no selected path or it is already being edited
   if (!path || editedPath.value === path) {
@@ -81,10 +79,14 @@ watch(selectedItems, async (selected) => {
   const extension = getExtension(path);
 
   if (TEXT_EXTS.includes(extension ?? "")) {
+    // Focus the editor when a text file is selected
     const contents = await readFile(path);
     focusEditor(path, contents);
+  } else if (!node.leaf) {
+    // Toggle children when a directory is selected
+    expandedKeys.value[node.key] = !(expandedKeys.value[node.key] ?? false);
   }
-});
+}
 
 // If the edited path changes outside of selection, update selection
 watch([editedPath, items], ([path, nodes]) => {
@@ -160,6 +162,7 @@ onMounted(() => refresh());
       selection-mode="single"
       :value="items"
       @node-expand="loadNode"
+      @node-select="onSelect"
     />
 
     <CreateFile v-model:visible="fileDialogVisible" />
