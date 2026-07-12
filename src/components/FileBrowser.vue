@@ -19,7 +19,10 @@ import {
 } from "@/workerApi";
 import Button from "primevue/button";
 import ButtonGroup from "primevue/buttongroup";
-import Tree from "primevue/tree";
+import Tree, {
+  type TreeExpandedKeys,
+  type TreeSelectionKeys,
+} from "primevue/tree";
 import type { TreeNode } from "primevue/treenode";
 import { computed, onMounted, ref, watch } from "vue";
 
@@ -62,7 +65,8 @@ const items = computed<TreeNode[]>(() => {
   return convertContentsToNodes(fileSystem.value);
 });
 
-const selectedItems = ref<Record<string, boolean>>({});
+const expandedKeys = ref<TreeExpandedKeys>({});
+const selectedItems = ref<TreeSelectionKeys>({});
 
 // Focus the editor when the selection changes
 watch(selectedItems, async (selected) => {
@@ -105,6 +109,10 @@ function loadNode(node: TreeNode) {
 
 function refresh() {
   refreshContents(PROJECT_ROOT);
+
+  for (const key of Object.keys(expandedKeys.value)) {
+    refreshContents(key);
+  }
 }
 
 onMounted(() => refresh());
@@ -147,6 +155,7 @@ onMounted(() => refresh());
     </div>
     <Tree
       :loading="loading"
+      v-model:expanded-keys="expandedKeys"
       v-model:selection-keys="selectedItems"
       selection-mode="single"
       :value="items"
