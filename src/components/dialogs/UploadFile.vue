@@ -1,11 +1,10 @@
 <script setup lang="ts">
+import { useStrippedPath } from "@/composables";
 import { uploadFiles } from "@/runtime";
-import { PROJECT_ROOT } from "@/workerApi";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import FileUpload, { type FileUploadSelectEvent } from "primevue/fileupload";
 import Message from "primevue/message";
-import { computed } from "vue";
 
 const props = defineProps<{
   basePath: string;
@@ -18,9 +17,7 @@ const visible = defineModel<boolean>("visible", {
   default: false,
 });
 
-const friendlyPath = computed<string>(() => {
-  return props.basePath.replace(PROJECT_ROOT, "") || "/";
-});
+const friendlyPath = useStrippedPath(() => props.basePath);
 
 function uploadHandler(event: FileUploadSelectEvent) {
   // Create a new unproxied array to pass

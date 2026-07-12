@@ -48,6 +48,7 @@ function updateListener(path: string): Extension {
     if (!update.docChanged) return;
     editorsRef[path] = update.view.state;
     createFile(
+      PROJECT_ROOT,
       path.slice(PROJECT_ROOT.length + 1),
       update.view.state.doc.toString(),
     );

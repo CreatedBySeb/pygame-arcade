@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useStrippedPath } from "@/composables";
 import { createDir } from "@/runtime";
 import { getExtension, TEXT_EXTS } from "@/workerApi";
 import type { MessageProps } from "primevue";
@@ -8,12 +9,17 @@ import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import { computed, ref } from "vue";
 
+const props = defineProps<{
+  basePath: string;
+}>();
+
 const visible = defineModel<boolean>("visible", {
   required: true,
   default: false,
 });
 
 const newFolderName = ref<string>("");
+const friendlyPath = useStrippedPath(() => props.basePath);
 
 const isValid = computed<boolean>(() => {
   const value = newFolderName.value;
@@ -42,7 +48,7 @@ function createFolder(_: SubmitEvent): void {
     return;
   }
 
-  createDir(newFolderName.value);
+  createDir(props.basePath, newFolderName.value);
   newFolderName.value = "";
   visible.value = false;
 }
@@ -57,6 +63,9 @@ function createFolder(_: SubmitEvent): void {
     header="Create Folder"
   >
     <form @submit.prevent="createFolder">
+      <Message size="small" variant="simple" severity="secondary">
+        Folder will be created in <code>{{ friendlyPath }}</code>
+      </Message>
       <div class="form-field">
         <label for="name">Name</label>
         <InputText

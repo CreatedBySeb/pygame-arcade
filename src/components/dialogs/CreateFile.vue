@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useStrippedPath } from "@/composables";
 import { focusEditor } from "@/editors";
 import { createFile } from "@/runtime";
 import newPythonTemplate from "@/templates/file.py?raw";
@@ -10,12 +11,17 @@ import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import { computed, ref } from "vue";
 
+const props = defineProps<{
+  basePath: string;
+}>();
+
 const visible = defineModel<boolean>("visible", {
   required: true,
   default: false,
 });
 
 const newFileName = ref<string>("");
+const friendlyPath = useStrippedPath(() => props.basePath);
 
 const friendlyExtensions = TEXT_EXTS.map(
   (ext) => `<code>.${ext}</code>`,
@@ -55,7 +61,7 @@ function createTextFile(_: SubmitEvent): void {
 
   const template = newFileName.value.endsWith(".py") ? newPythonTemplate : "";
 
-  createFile(newFileName.value, template);
+  createFile(props.basePath, newFileName.value, template);
   focusEditor(joinPath([PROJECT_ROOT, newFileName.value]), template);
   newFileName.value = "";
   visible.value = false;
@@ -71,6 +77,9 @@ function createTextFile(_: SubmitEvent): void {
     header="Create Text File"
   >
     <form @submit.prevent="createTextFile">
+      <Message size="small" variant="simple" severity="secondary">
+        File will be created in <code>{{ friendlyPath }}</code>
+      </Message>
       <div class="form-field">
         <label for="name">Name</label>
         <InputText

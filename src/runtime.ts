@@ -149,8 +149,8 @@ export function clearOutput(): void {
  * Creates a directory in the file system, automatically creating parents
  * @param path The path to create the directory at
  */
-export function createDir(path: string): void {
-  postMessage({ _type: "createDir", path: joinPath([PROJECT_ROOT, path]) });
+export function createDir(basePath: string, path: string): void {
+  postMessage({ _type: "createDir", path: joinPath([basePath, path]) });
 }
 
 /**
@@ -158,10 +158,14 @@ export function createDir(path: string): void {
  * @param path The path to create the file at
  * @param contents The initial contents of the file
  */
-export function createFile(path: string, contents: string): void {
+export function createFile(
+  basePath: string,
+  path: string,
+  contents: string,
+): void {
   postMessage({
     _type: "createFile",
-    path: joinPath([PROJECT_ROOT, path]),
+    path: joinPath([basePath, path]),
     contents,
   });
 }

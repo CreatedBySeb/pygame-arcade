@@ -188,6 +188,17 @@ export function splitPath(path: string): string[] {
 }
 
 /**
+ * Strips PROJECT_ROOT from the front of the path if present, "/" will be
+ * returned for the PROJECT_ROOT
+ *
+ * @param path The path to strip the leading project root from
+ * @returns The stripped path
+ */
+export function stripPath(path: string): string {
+  return path.replace(PROJECT_ROOT, "") || "/";
+}
+
+/**
  * Get the extension of a file from its path
  * @param path A path to a file
  * @returns The extension if one was found, otherwise null

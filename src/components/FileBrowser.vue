@@ -184,8 +184,11 @@ onMounted(() => refresh());
       @node-select="onSelect"
     />
 
-    <CreateFile v-model:visible="fileDialogVisible" />
-    <CreateFolder v-model:visible="folderDialogVisible" />
+    <CreateFile v-model:visible="fileDialogVisible" :base-path="selectedDir" />
+    <CreateFolder
+      v-model:visible="folderDialogVisible"
+      :base-path="selectedDir"
+    />
     <UploadFile
       v-model:visible="uploadDialogVisible"
       :base-path="selectedDir"
