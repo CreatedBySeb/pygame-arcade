@@ -7,8 +7,10 @@ import { viteStaticCopy } from "vite-plugin-static-copy";
 const PYODIDE_EXCLUDE: string[] = [
   "!**/*.{md,html}",
   "!**/*.d.ts",
+  "!**/*.map",
   "!**/*.whl",
   "!**/pyodide/node_modules",
+  "!package.json",
 ];
 
 function copyPyodideAssets(): PluginOption {
