@@ -99,25 +99,29 @@ onMounted(() => refresh());
         <Button
           :disabled="loading"
           icon="pi pi-upload"
-          aria-label="Upload file"
+          aria-label="Upload File"
+          title="Upload File"
           @click="uploadDialogVisible = true"
         />
         <Button
           :disabled="loading"
           icon="pi pi-file-plus"
           aria-label="Create Text File"
+          title="Create Text File"
           @click="fileDialogVisible = true"
         />
         <Button
           :disabled="loading"
           icon="pi pi-folder-plus"
           aria-label="Create Folder"
+          title="Create Folder"
           @click="folderDialogVisible = true"
         />
         <Button
           :disabled="loading"
           icon="pi pi-sync"
           aria-label="Refresh Files"
+          title="Refresh Files"
           @click="refresh"
         />
       </ButtonGroup>
