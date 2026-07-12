@@ -2,7 +2,7 @@
 import CreateFile from "@/components/dialogs/CreateFile.vue";
 import CreateFolder from "@/components/dialogs/CreateFolder.vue";
 import UploadFile from "@/components/dialogs/UploadFile.vue";
-import { focusEditor } from "@/editors";
+import { editedPath, focusEditor } from "@/editors";
 import {
   fileSystem,
   loadingPaths,
@@ -62,13 +62,15 @@ const items = computed<TreeNode[]>(() => {
   return convertContentsToNodes(fileSystem.value);
 });
 
-const selectedItems = ref<Record<string, TreeNode>>({});
+const selectedItems = ref<Record<string, boolean>>({});
 
+// Focus the editor when the selection changes
 watch(selectedItems, async (selected) => {
   // We only allow 1 selection, so this is always the selected key
   const path = Object.keys(selected).pop();
 
-  if (!path) {
+  // If there is no selected path or it is already being edited
+  if (!path || editedPath.value === path) {
     return;
   }
 
@@ -78,6 +80,23 @@ watch(selectedItems, async (selected) => {
     const contents = await readFile(path);
     focusEditor(path, contents);
   }
+});
+
+// If the edited path changes outside of selection, update selection
+watch([editedPath, items], ([path, nodes]) => {
+  // If there is no edited path or it is already selected
+  if (!path || selectedItems.value[path]) return;
+
+  // Get the node from the tree
+  const node = nodes.find((item) => item.key === path);
+  if (!node) return;
+
+  const selection = Object.keys(selectedItems.value).pop();
+  if (selection) {
+    delete selectedItems.value[selection];
+  }
+
+  selectedItems.value[path] = true;
 });
 
 function loadNode(node: TreeNode) {

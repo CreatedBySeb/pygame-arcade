@@ -54,6 +54,9 @@ function updateListener(path: string): Extension {
   });
 }
 
+/** The path currently being edited */
+export const editedPath = readonly(focusedPathRef);
+
 /** The currently focused editor state */
 export const focusedEditor = computed(() => {
   const path = focusedPathRef.value;
