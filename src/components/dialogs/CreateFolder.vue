@@ -58,6 +58,7 @@ function createFolder(_: SubmitEvent): void {
           id="name"
           placeholder="dir"
           v-model="newFolderName"
+          autofocus
           :invalid="newFolderName !== '' && !isValid"
         />
       </div>

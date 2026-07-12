@@ -77,6 +77,7 @@ function createTextFile(_: SubmitEvent): void {
           id="name"
           placeholder="file.py"
           v-model="newFileName"
+          autofocus
           :invalid="newFileName !== '' && !isValid"
         />
       </div>
