@@ -1,14 +1,19 @@
 import { createFile } from "@/runtime";
-import { PROJECT_ROOT } from "@/workerApi";
+import { getExtension, PROJECT_ROOT } from "@/workerApi";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { json } from "@codemirror/lang-json";
 import { python } from "@codemirror/lang-python";
+import { yaml } from "@codemirror/lang-yaml";
 import {
   bracketMatching,
   defaultHighlightStyle,
   indentOnInput,
   indentUnit,
+  LanguageSupport,
+  StreamLanguage,
   syntaxHighlighting,
 } from "@codemirror/language";
+import { toml } from "@codemirror/legacy-modes/mode/toml";
 import { searchKeymap } from "@codemirror/search";
 import { EditorState, Text, type Extension } from "@codemirror/state";
 import {
@@ -18,6 +23,17 @@ import {
   lineNumbers,
 } from "@codemirror/view";
 import { computed, readonly, ref, shallowReactive } from "vue";
+
+const EXTENSION_LANG: Record<
+  string,
+  () => LanguageSupport | StreamLanguage<unknown>
+> = {
+  json: json,
+  py: python,
+  toml: () => StreamLanguage.define(toml),
+  yml: yaml,
+  yaml: yaml,
+};
 
 const editorsRef = shallowReactive<Record<string, EditorState>>({});
 const focusedPathRef = ref<string | null>(null);
@@ -58,6 +74,10 @@ export const editors = readonly(editorsRef);
  * @param contents The contents of the opened file
  */
 function createEditor(path: string, contents: string): void {
+  const fileExtension = getExtension(path) ?? "";
+  const languageExtension =
+    fileExtension in EXTENSION_LANG ? [EXTENSION_LANG[fileExtension]()] : [];
+
   const state = EditorState.create({
     doc: Text.of(contents.split("\n")),
     extensions: [
@@ -69,7 +89,7 @@ function createEditor(path: string, contents: string): void {
       bracketMatching(),
       highlightActiveLine(),
       keymap.of([...defaultKeymap, ...searchKeymap, ...historyKeymap]),
-      python(),
+      ...languageExtension,
       updateListener(path),
     ],
   });
