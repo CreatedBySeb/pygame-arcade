@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useStrippedPath } from "@/composables";
 import { uploadFiles } from "@/runtime";
+import { TEXT_EXTS } from "@/workerApi";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import FileUpload, { type FileUploadSelectEvent } from "primevue/fileupload";
@@ -9,6 +10,12 @@ import Message from "primevue/message";
 const props = defineProps<{
   basePath: string;
 }>();
+
+const ALLOWED_FILES = [
+  "image/*",
+  "audio/*",
+  ...TEXT_EXTS.map((ext) => "." + ext),
+].join(",");
 
 const SIZE_LIMIT = 5_000_000;
 
@@ -45,7 +52,7 @@ function uploadHandler(event: FileUploadSelectEvent) {
     <div class="spaced-buttons">
       <FileUpload
         mode="basic"
-        accept="image/*"
+        :accept="ALLOWED_FILES"
         :max-file-size="SIZE_LIMIT"
         auto
         choose-icon="pi pi-search"
