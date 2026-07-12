@@ -1,3 +1,4 @@
+import invalidateImports from "@/scripts/invalidate_imports.py?raw";
 import mainTemplate from "@/templates/main.py?raw";
 import {
   assertNever,
@@ -131,6 +132,7 @@ self.onmessage = async (event): Promise<void> => {
         { encoding: "utf8" },
       );
 
+      pyodide.runPython(invalidateImports);
       const maybeCoroutine = pyodide.runPython(mainContents);
 
       if (maybeCoroutine && maybeCoroutine.type === "coroutine") {
