@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { createDir } from "@/runtime";
+import { getExtension, TEXT_EXTS } from "@/workerApi";
 import type { MessageProps } from "primevue";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
@@ -17,7 +18,11 @@ const newFolderName = ref<string>("");
 const isValid = computed<boolean>(() => {
   const value = newFolderName.value;
 
-  if (value.length < 1 || value.includes(" ") || value.endsWith(".py")) {
+  if (
+    value.length < 1 ||
+    value.includes(" ") ||
+    TEXT_EXTS.includes(getExtension(value) ?? "")
+  ) {
     return false;
   }
 
@@ -63,7 +68,7 @@ function createFolder(_: SubmitEvent): void {
         />
       </div>
       <Message size="small" :severity="hintSeverity" variant="simple">
-        Folder names must not contain spaces or end with <code>.py</code>.
+        Folder names must not contain spaces or end with a file extension.
       </Message>
       <div class="spaced-buttons">
         <Button
