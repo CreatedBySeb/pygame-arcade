@@ -16,6 +16,10 @@ export interface CreateFileMessage {
   path: string;
 }
 
+export interface ExportProjectMessage {
+  _type: "exportProject";
+}
+
 export interface ListContentsMessage {
   _type: "listContents";
   /** The directory path to list contents for */
@@ -59,6 +63,7 @@ export interface UploadFilesMessage {
 export type IncomingWorkerMessage =
   | CreateDirMessage
   | CreateFileMessage
+  | ExportProjectMessage
   | ListContentsMessage
   | ReadFileMessage
   | RunMessage
@@ -77,6 +82,12 @@ export interface ContentsListMessage {
   files: string[];
   /** The path to the directory the contents are listed for */
   path: string;
+}
+
+export interface ExportedProjectMessage {
+  _type: "exportedProject";
+  /** The generated zip file containing the project */
+  file: File;
 }
 
 export interface FileContentsMessage {
@@ -113,6 +124,7 @@ export interface TaskStartedMessage {
 
 export type OutgoingWorkerMessage =
   | ContentsListMessage
+  | ExportedProjectMessage
   | FileContentsMessage
   | FinishedMessage
   | ReadyMessage

@@ -1,3 +1,4 @@
+import exportProject from "@/scripts/export_project.py?raw";
 import invalidateImports from "@/scripts/invalidate_imports.py?raw";
 import mainTemplate from "@/templates/main.py?raw";
 import {
@@ -111,6 +112,20 @@ self.onmessage = async (event): Promise<void> => {
       pyodide.FS.mkdirTree(parent);
       pyodide.FS.writeFile(message.path, message.contents);
       listDir(pyodide, parent);
+      break;
+    }
+
+    case "exportProject": {
+      const zipData = pyodide.runPython(exportProject).toJs();
+      const zipFile = new File([zipData], "project.zip", {
+        type: "application/zip",
+      });
+
+      post({
+        _type: "exportedProject",
+        file: zipFile,
+      });
+
       break;
     }
 

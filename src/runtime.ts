@@ -90,6 +90,18 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
       break;
     }
 
+    case "exportedProject": {
+      const file = message.file;
+      const downloadAnchor = document.createElement("a");
+
+      downloadAnchor.download = "project.zip";
+      downloadAnchor.href = URL.createObjectURL(file);
+      downloadAnchor.click();
+
+      URL.revokeObjectURL(downloadAnchor.href);
+      break;
+    }
+
     case "fileContents": {
       const handlers = pendingReads[message.path];
 
@@ -168,6 +180,13 @@ export function createFile(
     path: joinPath([basePath, path]),
     contents,
   });
+}
+
+/**
+ * Triggers a download of the project as a zip archive
+ */
+export function downloadProject(): void {
+  postMessage({ _type: "exportProject" });
 }
 
 /**
