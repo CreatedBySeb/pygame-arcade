@@ -3,6 +3,7 @@ import Console from "@/components/Console.vue";
 import Editor from "@/components/Editor.vue";
 import FileBrowser from "@/components/FileBrowser.vue";
 import Window from "@/components/Window.vue";
+import ImportProject from "@/components/dialogs/ImportProject.vue";
 import { closeAllEditors } from "@/editors";
 import {
   downloadProject,
@@ -21,6 +22,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { ref, useTemplateRef, type Ref } from "vue";
 
 const confirm = useConfirm();
+const importVisible = ref(false);
 
 function confirmErase() {
   confirm.require({
@@ -50,6 +52,11 @@ const projectMenuItems: Ref<MenuItem[]> = ref([
     label: "Download as Zip",
     icon: "pi pi-download",
     command: downloadProject,
+  },
+  {
+    label: "Import from Zip",
+    icon: "pi pi-upload",
+    command: () => (importVisible.value = true),
   },
   {
     label: "Erase all Files",
@@ -119,6 +126,7 @@ const projectMenuItems: Ref<MenuItem[]> = ref([
       </div>
     </SplitterPanel>
   </Splitter>
+  <ImportProject v-model:visible="importVisible" />
 </template>
 
 <style>

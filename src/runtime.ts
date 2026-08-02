@@ -195,10 +195,7 @@ export function downloadProject(): void {
  * Triggers an erase of all project files, restoring the base template
  */
 export function eraseProject(): void {
-  readyRef.value = false;
-  fileStructureRef.value = {};
-  stderrRef.value = "";
-  stdoutRef.value = "";
+  resetProject();
   postMessage({ _type: "eraseProject" });
 }
 
@@ -206,6 +203,15 @@ export function eraseProject(): void {
  * A read-only representation of the file system structure
  */
 export const fileSystem = readonly(fileStructureRef);
+
+/**
+ * Triggers an import of a project from a provided zip file
+ * @param file The zip file to import from
+ */
+export function importProject(file: File): void {
+  resetProject();
+  postMessage({ _type: "importProject", file });
+}
 
 /**
  * Interrupt the current execution
@@ -313,6 +319,16 @@ function postMessage(
   transfer: Transferable[] = [],
 ): void {
   pyodideWorker.postMessage(message, transfer);
+}
+
+/**
+ * Internal helper for resetting project state, shared between erase and import
+ */
+function resetProject() {
+  readyRef.value = false;
+  fileStructureRef.value = {};
+  stderrRef.value = "";
+  stdoutRef.value = "";
 }
 
 /**

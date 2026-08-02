@@ -1,4 +1,5 @@
 import exportProject from "@/scripts/export_project.py?raw";
+import importProject from "@/scripts/import_project.py?raw";
 import invalidateImports from "@/scripts/invalidate_imports.py?raw";
 import mainTemplate from "@/templates/main.py?raw";
 import {
@@ -66,6 +67,15 @@ function bootstrapProject(pyo: PyodideAPI): void {
 }
 
 /**
+ * Erases all files in the project
+ * @param pyo The loaded Pyodide instance
+ */
+function eraseProject(pyo: PyodideAPI): void {
+  pyo.FS.chdir("/");
+  pyo.runPython(`import shutil; shutil.rmtree("${PROJECT_ROOT}")`);
+}
+
+/**
  * Internal helper for sending worker messages with typing
  * @param message The message to send to the main thread
  */
@@ -125,8 +135,7 @@ self.onmessage = async (event): Promise<void> => {
     }
 
     case "eraseProject": {
-      pyodide.FS.chdir("/");
-      pyodide.runPython(`import shutil; shutil.rmtree("${PROJECT_ROOT}")`);
+      eraseProject(pyodide);
       bootstrapProject(pyodide);
 
       post({ _type: "ready" });
@@ -144,6 +153,16 @@ self.onmessage = async (event): Promise<void> => {
         file: zipFile,
       });
 
+      break;
+    }
+
+    case "importProject": {
+      eraseProject(pyodide);
+      const importFunc = pyodide.runPython(importProject);
+      importFunc(pyodide.toPy(await message.file.bytes()));
+      pyodide.FS.chdir(PROJECT_ROOT);
+
+      post({ _type: "ready" });
       break;
     }
 

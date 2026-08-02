@@ -24,6 +24,12 @@ export interface ExportProjectMessage {
   _type: "exportProject";
 }
 
+export interface ImportProjectMessage {
+  _type: "importProject";
+  /** The zip file to import */
+  file: File;
+}
+
 export interface ListContentsMessage {
   _type: "listContents";
   /** The directory path to list contents for */
@@ -69,6 +75,7 @@ export type IncomingWorkerMessage =
   | CreateFileMessage
   | EraseProjectMessage
   | ExportProjectMessage
+  | ImportProjectMessage
   | ListContentsMessage
   | ReadFileMessage
   | RunMessage
