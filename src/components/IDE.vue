@@ -3,11 +3,61 @@ import Console from "@/components/Console.vue";
 import Editor from "@/components/Editor.vue";
 import FileBrowser from "@/components/FileBrowser.vue";
 import Window from "@/components/Window.vue";
-import { interrupt, pyodideLoaded, runProgram } from "@/runtime.ts";
+import { closeAllEditors } from "@/editors";
+import {
+  downloadProject,
+  eraseProject,
+  interrupt,
+  pyodideLoaded,
+  runProgram,
+} from "@/runtime.ts";
 import Button from "primevue/button";
+import Menu from "primevue/menu";
+import type { MenuItem } from "primevue/menuitem";
 import Message from "primevue/message";
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
+import { useConfirm } from "primevue/useconfirm";
+import { ref, useTemplateRef, type Ref } from "vue";
+
+const confirm = useConfirm();
+
+function confirmErase() {
+  confirm.require({
+    accept: () => {
+      closeAllEditors();
+      eraseProject();
+    },
+    acceptProps: {
+      label: "Confirm Erase",
+      severity: "danger",
+    },
+    blockScroll: true,
+    header: "Confirm Project Erase",
+    icon: "pi pi-exclamation-triangle",
+    message:
+      "Are you sure you want to erase all files and data in your project?",
+    rejectProps: {
+      label: "Cancel",
+      severity: "secondary",
+    },
+  });
+}
+
+const projectMenu = useTemplateRef("projectMenu");
+const projectMenuItems: Ref<MenuItem[]> = ref([
+  {
+    label: "Download as Zip",
+    icon: "pi pi-download",
+    command: downloadProject,
+  },
+  {
+    label: "Erase all Files",
+    icon: "pi pi-eraser",
+    class: "p-menu-item-danger",
+    command: confirmErase,
+  },
+]);
 </script>
 
 <template>
@@ -44,6 +94,22 @@ import SplitterPanel from "primevue/splitterpanel";
             icon="pi pi-stop"
             label="Stop"
             @click="interrupt"
+          />
+          <Button
+            severity="secondary"
+            :disabled="!pyodideLoaded"
+            icon="pi pi-chevron-down"
+            icon-pos="right"
+            label="Project"
+            aria-haspopup
+            aria-controls="project-menu"
+            @click="projectMenu?.toggle"
+          />
+          <Menu
+            id="project-menu"
+            ref="projectMenu"
+            :popup="true"
+            :model="projectMenuItems"
           />
         </div>
         <Message v-show="!pyodideLoaded" severity="secondary">

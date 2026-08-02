@@ -123,8 +123,10 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
 
       if (canvasRef.value) {
         transferCanvasControl(canvasRef.value);
+        canvasRef.value = null; // Unset to avoid re-attempting transfer
       }
 
+      refreshContents(PROJECT_ROOT);
       break;
     }
 
@@ -187,6 +189,17 @@ export function createFile(
  */
 export function downloadProject(): void {
   postMessage({ _type: "exportProject" });
+}
+
+/**
+ * Triggers an erase of all project files, restoring the base template
+ */
+export function eraseProject(): void {
+  readyRef.value = false;
+  fileStructureRef.value = {};
+  stderrRef.value = "";
+  stdoutRef.value = "";
+  postMessage({ _type: "eraseProject" });
 }
 
 /**
@@ -258,9 +271,9 @@ export function refreshContents(path: string) {
 export function setCanvas(canvas: HTMLCanvasElement): void {
   if (pyodideLoaded.value) {
     transferCanvasControl(canvas);
+  } else {
+    canvasRef.value = canvas;
   }
-
-  canvasRef.value = canvas;
 }
 
 /**

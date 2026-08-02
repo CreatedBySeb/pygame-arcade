@@ -4,7 +4,6 @@ import CreateFolder from "@/components/dialogs/CreateFolder.vue";
 import UploadFile from "@/components/dialogs/UploadFile.vue";
 import { editedPath, focusEditor } from "@/editors";
 import {
-  downloadProject,
   fileSystem,
   loadingPaths,
   readFile,
@@ -26,7 +25,7 @@ import Tree, {
   type TreeSelectionKeys,
 } from "primevue/tree";
 import type { TreeNode } from "primevue/treenode";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 function convertContentsToNodes(contents: DirectoryContents): TreeNode[] {
   return Object.values(contents)
@@ -136,8 +135,6 @@ function refresh() {
     refreshContents(key);
   }
 }
-
-onMounted(() => refresh());
 </script>
 
 <template>
@@ -165,13 +162,6 @@ onMounted(() => refresh());
           aria-label="Create Folder"
           title="Create Folder"
           @click="folderDialogVisible = true"
-        />
-        <Button
-          :disabled="loading"
-          icon="pi pi-download"
-          aria-label="Download Project"
-          title="Download Project"
-          @click="downloadProject"
         />
         <Button
           :disabled="loading"

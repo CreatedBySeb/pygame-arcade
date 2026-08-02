@@ -16,6 +16,10 @@ export interface CreateFileMessage {
   path: string;
 }
 
+export interface EraseProjectMessage {
+  _type: "eraseProject";
+}
+
 export interface ExportProjectMessage {
   _type: "exportProject";
 }
@@ -63,6 +67,7 @@ export interface UploadFilesMessage {
 export type IncomingWorkerMessage =
   | CreateDirMessage
   | CreateFileMessage
+  | EraseProjectMessage
   | ExportProjectMessage
   | ListContentsMessage
   | ReadFileMessage

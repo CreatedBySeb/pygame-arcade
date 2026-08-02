@@ -11,7 +11,12 @@ const mountedRef = ref<boolean>(false);
 let view: EditorView | null = null;
 
 watch(focusedEditor, (state) => {
-  if (state && view && state !== view.state) {
+  if (!view) return;
+
+  if (state === null) {
+    view.destroy();
+    view = null;
+  } else if (state !== view.state) {
     view.setState(state);
   }
 });

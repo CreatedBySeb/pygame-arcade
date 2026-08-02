@@ -106,6 +106,17 @@ function createEditor(path: string, contents: string): void {
 }
 
 /**
+ * Closes all open editors, useful for reset/imported projects
+ */
+export function closeAllEditors(): void {
+  focusedPathRef.value = null;
+
+  for (const path of Object.keys(editorsRef)) {
+    delete editorsRef[path];
+  }
+}
+
+/**
  * Focuses an editor, creating it if it didn't exist already
  * @param path The path to the opened file
  * @param contents The contents of the opened file

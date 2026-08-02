@@ -33,12 +33,8 @@ const pyodideReady = loadPyodide({
   pyo.setStderr({ write: sendStderr });
   pyo.setStdout({ write: sendStdout });
 
-  // Create 'project' directory
-  pyo.FS.mkdir(PROJECT_ROOT);
-  pyo.FS.chdir(PROJECT_ROOT);
-
-  // Initialise project files
-  pyo.FS.writeFile(joinPath([PROJECT_ROOT, "main.py"]), mainTemplate);
+  // Bootstrap the project
+  bootstrapProject(pyo);
 
   // Alert main thread we are ready to run
   post({ _type: "ready" });
@@ -55,6 +51,19 @@ const sendStdout = (buffer: Uint8Array): number => {
   post({ _type: "stdout", text: decoder.decode(buffer) });
   return buffer.length;
 };
+
+/**
+ * Bootstraps a new project by creating the directory and main.py
+ * @param pyo The loaded Pyodide instance
+ */
+function bootstrapProject(pyo: PyodideAPI): void {
+  // Create 'project' directory
+  pyo.FS.mkdir(PROJECT_ROOT);
+  pyo.FS.chdir(PROJECT_ROOT);
+
+  // Initialise project files
+  pyo.FS.writeFile(joinPath([PROJECT_ROOT, "main.py"]), mainTemplate);
+}
 
 /**
  * Internal helper for sending worker messages with typing
@@ -112,6 +121,15 @@ self.onmessage = async (event): Promise<void> => {
       pyodide.FS.mkdirTree(parent);
       pyodide.FS.writeFile(message.path, message.contents);
       listDir(pyodide, parent);
+      break;
+    }
+
+    case "eraseProject": {
+      pyodide.FS.chdir("/");
+      pyodide.runPython(`import shutil; shutil.rmtree("${PROJECT_ROOT}")`);
+      bootstrapProject(pyodide);
+
+      post({ _type: "ready" });
       break;
     }
 

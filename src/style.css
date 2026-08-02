@@ -50,6 +50,14 @@ form {
   min-width: 24rem;
 }
 
+.p-menu-item.p-menu-item-danger {
+  --p-menu-item-color: var(--p-red-500);
+  --p-menu-item-focus-background: var(--p-red-100);
+  --p-menu-item-focus-color: var(--p-red-500);
+  --p-menu-item-icon-color: var(--p-red-600);
+  --p-menu-item-icon-focus-color: var(--p-red-600);
+}
+
 .p-tree-empty-message {
   padding: 1rem;
 }

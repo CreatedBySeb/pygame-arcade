@@ -6,6 +6,7 @@ import Aura from "@primeuix/themes/aura";
 import type { AuraBaseDesignTokens } from "@primeuix/themes/aura/base";
 import type { Preset } from "@primeuix/themes/types";
 import PrimeVue from "primevue/config";
+import ConfirmationService from "primevue/confirmationservice";
 import { createApp } from "vue";
 
 const app = createApp(App);
@@ -80,5 +81,7 @@ app.use(PrimeVue, {
     },
   },
 });
+
+app.use(ConfirmationService);
 
 app.mount("#app");
