@@ -1,3 +1,4 @@
+import deleteProject from "@/scripts/delete_project.py?raw";
 import exportProject from "@/scripts/export_project.py?raw";
 import importProject from "@/scripts/import_project.py?raw";
 import invalidateImports from "@/scripts/invalidate_imports.py?raw";
@@ -34,8 +35,15 @@ const pyodideReady = loadPyodide({
   pyo.setStderr({ write: sendStderr });
   pyo.setStdout({ write: sendStdout });
 
+  // Mount project directory
+  pyo.FS.mkdir(PROJECT_ROOT);
+  // @ts-expect-error -- Pyodide filesystems are not included in type currently
+  pyo.FS.mount(pyo.FS.filesystems.IDBFS, { autoPersist: true }, PROJECT_ROOT);
+  await syncFS(pyo, true).catch(console.error); // Ensure data is read in before changes
+  pyo.FS.chdir(PROJECT_ROOT);
+
   // Bootstrap the project
-  bootstrapProject(pyo);
+  await bootstrapProject(pyo);
 
   // Alert main thread we are ready to run
   post({ _type: "ready" });
@@ -57,13 +65,20 @@ const sendStdout = (buffer: Uint8Array): number => {
  * Bootstraps a new project by creating the directory and main.py
  * @param pyo The loaded Pyodide instance
  */
-function bootstrapProject(pyo: PyodideAPI): void {
-  // Create 'project' directory
-  pyo.FS.mkdir(PROJECT_ROOT);
-  pyo.FS.chdir(PROJECT_ROOT);
+async function bootstrapProject(pyo: PyodideAPI): Promise<void> {
+  const mainPath = joinPath([PROJECT_ROOT, "main.py"]);
+  const { exists } = pyo.FS.analyzePath(mainPath);
+
+  // Avoid bootstrapping if the file already exists
+  if (exists) {
+    return;
+  }
 
   // Initialise project files
-  pyo.FS.writeFile(joinPath([PROJECT_ROOT, "main.py"]), mainTemplate);
+  pyo.FS.writeFile(mainPath, mainTemplate);
+
+  // Ensure bootstrapped project is persisted
+  await syncFS(pyo, false).catch(console.error);
 }
 
 /**
@@ -71,8 +86,7 @@ function bootstrapProject(pyo: PyodideAPI): void {
  * @param pyo The loaded Pyodide instance
  */
 function eraseProject(pyo: PyodideAPI): void {
-  pyo.FS.chdir("/");
-  pyo.runPython(`import shutil; shutil.rmtree("${PROJECT_ROOT}")`);
+  pyo.runPython(deleteProject);
 }
 
 /**
@@ -106,6 +120,18 @@ function listDir(pyodide: PyodideAPI, root: string): void {
   post({ _type: "contentsList", path: root, directories, files });
 }
 
+/**
+ * A promise-based version of the syncfs function in Emscripten FS
+ * @param pyo The loaded Pyodide instance
+ * @param populate The `populate` value to pass through to syncfs
+ * @returns A promise which resolves on completion or rejects with the error
+ */
+function syncFS(pyo: PyodideAPI, populate: boolean): Promise<void> {
+  return new Promise((resolve, reject) => {
+    pyo.FS.syncfs(populate, (e) => (e !== null ? reject(e) : resolve()));
+  });
+}
+
 self.onmessage = async (event): Promise<void> => {
   if (!pyodide) {
     pyodide = await pyodideReady;
@@ -136,7 +162,7 @@ self.onmessage = async (event): Promise<void> => {
 
     case "eraseProject": {
       eraseProject(pyodide);
-      bootstrapProject(pyodide);
+      await bootstrapProject(pyodide);
 
       post({ _type: "ready" });
       break;
@@ -160,7 +186,7 @@ self.onmessage = async (event): Promise<void> => {
       eraseProject(pyodide);
       const importFunc = pyodide.runPython(importProject);
       importFunc(pyodide.toPy(await message.file.bytes()));
-      pyodide.FS.chdir(PROJECT_ROOT);
+      await syncFS(pyodide, false).catch(console.error);
 
       post({ _type: "ready" });
       break;
