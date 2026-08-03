@@ -25,6 +25,12 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
+  /*
+    Test timeout, separate from the timeout for individual assertions
+    Firefox seems to be slow in headless mode, so this needs to be high
+  */
+  timeout: 120_000,
+
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */

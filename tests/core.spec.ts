@@ -19,7 +19,7 @@ test("loads runtime", async ({ page }) => {
 
   // Expect the "Loading Python..." message to vanish and buttons to enable
   await expect(page.getByText("Loading Python...")).toBeHidden({
-    timeout: 30_000, // Loading may take a while depending on network
+    timeout: 60_000, // Loading may take a while depending on network
   });
 
   for (const button of await page.getByRole("button").all()) {
