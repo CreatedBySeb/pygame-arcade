@@ -1,5 +1,3 @@
-# Vue 3 + TypeScript + Vite
+# Pygame Arcade
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
-
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+Pygame Arcade is a web-based development environment for making 2D games using the Pygame library for Python, specifically [Pygame Community Edition](https://github.com/pygame-community/pygame-ce), by leveraging the [Pyodide](https://github.com/pyodide/pyodide) WASM-based Python distribution. The environment aims to provide a frictionless experience on par with tools like Scratch and MakeCode for inexperienced programmers to develop games and share them with others using Python, including on restrictive devices like Chromebooks and tablets. The project is currently a work in progress and is continuously evolving.
