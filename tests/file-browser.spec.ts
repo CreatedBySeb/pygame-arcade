@@ -17,7 +17,7 @@ test.describe("file browser", () => {
 
   test("upload single", async () => {
     // Upload file
-    await fileBrowser.uploadFiles("tests/resources/empty.txt");
+    await fileBrowser.uploadFiles(`${import.meta.dirname}/resources/empty.txt`);
 
     // Check for the new entry
     const item = await fileBrowser.getItem("empty.txt");
@@ -29,7 +29,7 @@ test.describe("file browser", () => {
     const fileNames = ["file1.txt", "file2.txt"];
 
     await fileBrowser.uploadFiles(
-      fileNames.map((file) => `tests/resources/${file}`),
+      fileNames.map((file) => `${import.meta.dirname}/resources/${file}`),
     );
 
     // Check for the new entries
