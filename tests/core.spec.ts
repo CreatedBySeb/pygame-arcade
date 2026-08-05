@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { Runtime } from "./helpers";
 
 const EXPECTED_FILES: RegExp[] = [
   /\/pyodide-lock.json$/,
@@ -8,6 +9,7 @@ const EXPECTED_FILES: RegExp[] = [
 ];
 
 test("loads runtime", async ({ page }) => {
+  const runtime = new Runtime(page);
   await page.goto("/");
 
   // Expect the "Loading Python..." message and buttons to be disabled
@@ -17,10 +19,7 @@ test("loads runtime", async ({ page }) => {
     await expect(button).toBeDisabled();
   }
 
-  // Expect the "Loading Python..." message to vanish and buttons to enable
-  await expect(page.getByText("Loading Python...")).toBeHidden({
-    timeout: 60_000, // Loading may take a while depending on network
-  });
+  await runtime.waitForLoad();
 
   for (const button of await page.getByRole("button").all()) {
     await expect(button).toBeEnabled();
@@ -39,14 +38,12 @@ test("loads runtime", async ({ page }) => {
 
 test.describe("core", () => {
   let page: Page;
+  let runtime: Runtime;
 
   test.beforeAll(async ({ browser }) => {
     page = await browser.newPage();
-    await page.goto("/");
-
-    await expect(page.getByText("Loading Python...")).toBeHidden({
-      timeout: 60_000, // Loading may take a while depending on network
-    });
+    runtime = new Runtime(page);
+    await runtime.loadEditor();
   });
 
   test("template runs", async () => {
@@ -93,10 +90,7 @@ test.describe("core", () => {
     await editor.fill(marker);
 
     // Reload the page
-    await page.reload();
-    await expect(page.getByText("Loading Python...")).toBeHidden({
-      timeout: 60_000, // Loading may take a while depending on network
-    });
+    await runtime.loadEditor();
 
     // Assert content remained the same
     await expect(editor).toContainText(marker);
