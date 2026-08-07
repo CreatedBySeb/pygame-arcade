@@ -1,4 +1,9 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import {
+  expect,
+  type Download,
+  type Locator,
+  type Page,
+} from "@playwright/test";
 
 /**
  * How long to wait for the runtime to load
@@ -86,6 +91,87 @@ export class FileBrowser extends TestHelper {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(files);
     await expect(modal).toBeHidden();
+  }
+}
+
+export class Project extends TestHelper {
+  /**
+   * Exports the project as a zip and returns the download
+   * @returns The download for the project
+   */
+  public async download(): Promise<Download> {
+    // Prepare to catch download event
+    const downloadPromise = this.page.waitForEvent("download");
+
+    // Trigger the download
+    const projectMenu = await this.openProjectMenu();
+    await projectMenu
+      .getByRole("menuitem", { name: "Download as Zip" })
+      .click();
+
+    // Return the caught download event
+    return await downloadPromise;
+  }
+
+  /**
+   * Resets the project
+   */
+  public async erase(): Promise<void> {
+    // Trigger the reset
+    const projectMenu = await this.openProjectMenu();
+    await projectMenu
+      .getByRole("menuitem", { name: "Erase all Files" })
+      .click();
+
+    // Find the modal and confirm
+    const modal = this.page
+      .getByRole("alertdialog")
+      .filter({ hasText: "Confirm Project Erase" });
+
+    await expect(modal).toBeVisible();
+    await modal.getByRole("button", { name: "Confirm Erase" }).click();
+    await expect(modal).toBeHidden();
+  }
+
+  /**
+   * Imports a project from a zip file
+   * @param file The path to the zip file to import
+   */
+  public async import(file: string): Promise<void> {
+    // Prepare to catch the upload event
+    const fileChooserPromise = this.page.waitForEvent("filechooser");
+
+    // Select import from the project menu
+    const projectMenu = await this.openProjectMenu();
+    await projectMenu
+      .getByRole("menuitem", { name: "Import from Zip" })
+      .click();
+
+    // Find the modal
+    const modal = this.page
+      .getByRole("dialog")
+      .filter({ hasText: "Import Project" });
+
+    await expect(modal).toBeVisible();
+
+    // Select the zip file
+    await modal.getByRole("button", { name: "Select Zip File" }).click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(file);
+    await expect(modal).toBeHidden();
+  }
+
+  /**
+   * Opens the project menu and returns a locator for it
+   * @returns A Locator for the project menu
+   */
+  public async openProjectMenu(): Promise<Locator> {
+    const projectButton = this.page.getByRole("button", { name: "Project" });
+    await projectButton.click();
+
+    const projectMenu = this.page.getByRole("menu");
+    await expect(projectMenu).toBeVisible();
+    return projectMenu;
   }
 }
 
