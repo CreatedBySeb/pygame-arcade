@@ -26,14 +26,11 @@ const pyodideReady = loadPyodide({
   indexURL: `${import.meta.env.BASE_URL}assets/pyodide`,
   packageBaseUrl: `${self.location.protocol}//${self.location.host}/assets/wheels/`,
 }).then(async (pyo) => {
-  await pyo.loadPackage(["pygame-ce"]);
+  // Start loading pygame while doing other setup
+  const pygamePromise = pyo.loadPackage(["pygame-ce"]);
 
   // Workaround for https://github.com/pyodide/pyodide/issues/3697
   (pyo as any)._api._skip_unwind_fatal_error = true;
-
-  // Transmit stdout/stderr
-  pyo.setStderr({ write: sendStderr });
-  pyo.setStdout({ write: sendStdout });
 
   // Mount project directory
   pyo.FS.mkdir(PROJECT_ROOT);
@@ -44,6 +41,13 @@ const pyodideReady = loadPyodide({
 
   // Bootstrap the project
   await bootstrapProject(pyo);
+
+  // Wait for pygame to finish loading
+  await pygamePromise;
+
+  // Transmit stdout/stderr
+  pyo.setStderr({ write: sendStderr });
+  pyo.setStdout({ write: sendStdout });
 
   // Alert main thread we are ready to run
   post({ _type: "ready" });
