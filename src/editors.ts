@@ -1,5 +1,11 @@
 import { createFile } from "@/runtime";
 import { getExtension, PROJECT_ROOT } from "@/workerApi";
+import {
+  autocompletion,
+  closeBrackets,
+  closeBracketsKeymap,
+  completionKeymap,
+} from "@codemirror/autocomplete";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { json } from "@codemirror/lang-json";
 import { python } from "@codemirror/lang-python";
@@ -91,8 +97,16 @@ function createEditor(path: string, contents: string): void {
       indentUnit.of("    "),
       syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
       bracketMatching(),
+      closeBrackets(),
+      autocompletion(),
       highlightActiveLine(),
-      keymap.of([...defaultKeymap, ...searchKeymap, ...historyKeymap]),
+      keymap.of([
+        ...closeBracketsKeymap,
+        ...defaultKeymap,
+        ...searchKeymap,
+        ...historyKeymap,
+        ...completionKeymap,
+      ]),
       ...languageExtension,
       updateListener(path),
     ],
