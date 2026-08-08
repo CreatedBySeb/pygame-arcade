@@ -61,7 +61,16 @@ watch(stderrRef, async (value) => {
   height: 100%;
   width: 100%;
 
-  & .p-tabpanels,
+  & .p-tablist {
+    flex-shrink: 0;
+  }
+
+  & .p-tabpanels {
+    flex: 1 1%;
+    height: 1rem;
+    padding: 0;
+  }
+
   & .p-tabpanel {
     height: 100%;
   }

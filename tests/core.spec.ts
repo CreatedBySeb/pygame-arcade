@@ -163,4 +163,21 @@ test.describe("core", () => {
     await expect(outputPanel).toBeVisible();
     await expect(outputPanel).toContainText("async error fixed");
   });
+
+  test("console scroll follows output", async () => {
+    // Edit the file to print 100 lines
+    const editor = page.getByRole("textbox");
+    await editor.fill(["for _ in range(100):", '    print("hi")'].join("\n"));
+
+    // Start the project
+    await runtime.start();
+
+    // Check the lines have printed and console scrolls
+    const outputPanel = page.getByRole("tabpanel", { name: "Output" });
+    await expect(outputPanel).toContainText("hi\n".repeat(100));
+    const scrollPercent = await outputPanel
+      .locator("pre")
+      .evaluate((el) => el.scrollTop / (el.scrollHeight - el.clientHeight));
+    expect(scrollPercent).toBe(1);
+  });
 });
