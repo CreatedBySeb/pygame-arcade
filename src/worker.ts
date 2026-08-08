@@ -12,8 +12,10 @@ import {
   type OutgoingWorkerMessage,
 } from "@/workerApi";
 import { loadPyodide, type PyodideAPI } from "pyodide";
+import type { PyProxy } from "pyodide/ffi";
 
 interface TaskLike {
+  add_done_callback(callback: (future: PyProxy) => void): void;
   cancel(msg?: string): void;
 }
 
@@ -101,6 +103,22 @@ function post(message: OutgoingWorkerMessage): void {
   postMessage(message);
 }
 
+/**
+ * Internal callback for when the main task completes
+ * @param future The future that completed
+ */
+function handleCompletion(future: PyProxy): void {
+  const exception: PyProxy | null = future.cancelled()
+    ? null
+    : (future.exception() as PyProxy);
+
+  if (exception) {
+    reportException(exception);
+  } else {
+    post({ _type: "finished" });
+  }
+}
+
 function listDir(pyodide: PyodideAPI, root: string): void {
   const children = pyodide.FS.readdir(root);
   const directories: string[] = [];
@@ -122,6 +140,29 @@ function listDir(pyodide: PyodideAPI, root: string): void {
   }
 
   post({ _type: "contentsList", path: root, directories, files });
+}
+
+/**
+ * Internal helper to retrieve the traceback of an exception and report it to
+ * the runtime. This function takes ownership of the exception and destroys it.
+ * @param exception The exception to report
+ */
+function reportException(exception?: PyProxy): void {
+  const traceback = pyodide!.pyimport("traceback");
+
+  if (!exception) {
+    const sys = pyodide!.pyimport("sys");
+    exception = sys.last_exc.copy() as PyProxy;
+    sys.destroy();
+  }
+
+  post({
+    _type: "errored",
+    error: traceback.format_exception(exception).join(""),
+  });
+
+  traceback.destroy();
+  exception.destroy();
 }
 
 /**
@@ -215,14 +256,32 @@ self.onmessage = async (event): Promise<void> => {
       );
 
       pyodide.runPython(invalidateImports);
-      const maybeCoroutine = pyodide.runPython(mainContents);
+      let maybeCoroutine: PyProxy;
+
+      try {
+        maybeCoroutine = pyodide.runPython(mainContents);
+      } catch (e) {
+        if (e instanceof pyodide.ffi.PythonError) {
+          reportException();
+        } else {
+          console.error(e);
+          post({
+            _type: "errored",
+            error:
+              "SystemError: Internal Pygame Arcade exception, check browser console for details",
+          });
+        }
+
+        return;
+      }
 
       if (maybeCoroutine && maybeCoroutine.type === "coroutine") {
         const webloop = pyodide.runPython(
           "import asyncio\nasyncio.get_running_loop()",
         );
 
-        task = webloop.create_task(maybeCoroutine);
+        task = webloop.create_task(maybeCoroutine) as TaskLike;
+        task.add_done_callback(handleCompletion);
         post({ _type: "taskStarted" });
       } else {
         post({ _type: "finished" });

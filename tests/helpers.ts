@@ -185,6 +185,22 @@ export class Runtime extends TestHelper {
   }
 
   /**
+   * Press the start button
+   */
+  public async start(): Promise<void> {
+    const button = this.page.getByRole("button", { name: "Run it!" });
+    await button.click();
+  }
+
+  /**
+   * Press the stop button
+   */
+  public async stop(): Promise<void> {
+    const button = this.page.getByRole("button", { name: "Stop" });
+    await button.click();
+  }
+
+  /**
    * Waits for the runtime to fully load
    */
   public async waitForLoad(): Promise<void> {

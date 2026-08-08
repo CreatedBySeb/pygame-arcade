@@ -5,8 +5,11 @@ import TabList from "primevue/tablist";
 import TabPanel from "primevue/tabpanel";
 import TabPanels from "primevue/tabpanels";
 import Tabs from "primevue/tabs";
-import { nextTick, useTemplateRef, watch, type Ref } from "vue";
+import { nextTick, ref, useTemplateRef, watch, type Ref } from "vue";
 
+type TabValue = "stderr" | "stdout";
+
+const activeTab = ref<TabValue>("stdout");
 const stderrEl = useTemplateRef("stderr");
 const stdoutEl = useTemplateRef("stdout");
 const [stdoutRef, stderrRef] = useOutput();
@@ -23,22 +26,30 @@ watch(stdoutRef, async () => {
   scrollToBottom(stdoutEl);
 });
 
-watch(stderrRef, async () => {
+watch(stderrRef, async (value) => {
+  if (activeTab.value === "stdout") {
+    // Stderr being emitted should swap focus
+    activeTab.value = "stderr";
+  } else if (!value.length) {
+    // If stderr is cleared we have reset, so put focus back
+    activeTab.value = "stdout";
+  }
+
   scrollToBottom(stderrEl);
 });
 </script>
 
 <template>
-  <Tabs id="console" value="0">
+  <Tabs id="console" v-model:value="activeTab">
     <TabList>
-      <Tab value="0">Output</Tab>
-      <Tab value="1">Errors</Tab>
+      <Tab value="stdout">Output</Tab>
+      <Tab value="stderr">Errors</Tab>
     </TabList>
     <TabPanels>
-      <TabPanel value="0">
+      <TabPanel value="stdout">
         <pre ref="stdout">{{ stdoutRef }}</pre>
       </TabPanel>
-      <TabPanel value="1">
+      <TabPanel value="stderr">
         <pre ref="stderr">{{ stderrRef }}</pre>
       </TabPanel>
     </TabPanels>

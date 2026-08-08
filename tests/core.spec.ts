@@ -48,8 +48,7 @@ test.describe("core", () => {
 
   test("template runs", async () => {
     // Start the project
-    const startButton = page.getByRole("button", { name: "Run it!" });
-    await startButton.click();
+    await runtime.start();
 
     // Check the pygame-ce message is printed
     const outputPanel = page.getByRole("tabpanel", { name: "Output" });
@@ -58,8 +57,8 @@ test.describe("core", () => {
     );
 
     // Restart the project
-    await page.getByRole("button", { name: "Stop" }).click();
-    await startButton.click();
+    await runtime.stop();
+    await runtime.start();
 
     // Check the console was cleared
     await expect(outputPanel).toContainText(/^$/);
@@ -71,10 +70,9 @@ test.describe("core", () => {
     await editor.fill('print("hi")');
 
     // Start the project
-    const startButton = page.getByRole("button", { name: "Run it!" });
-    await startButton.click();
+    await runtime.start();
 
-    // Check the pygame-ce message is printed
+    // Check the message is printed
     const outputPanel = page.getByRole("tabpanel", { name: "Output" });
     await expect(outputPanel).toContainText("hi");
   });
@@ -94,5 +92,75 @@ test.describe("core", () => {
 
     // Assert content remained the same
     await expect(editor).toContainText(marker);
+  });
+
+  test("sync error is handled", async () => {
+    // Edit the file to raise an error
+    const editor = page.getByRole("textbox");
+    await editor.fill('raise RuntimeError("sync test")');
+
+    // Start the project
+    await runtime.start();
+
+    // Check the error is printed
+    const errorPanel = page.getByRole("tabpanel", { name: "Errors" });
+    await expect(errorPanel).toBeVisible();
+    await expect(errorPanel).toContainText(
+      "Traceback (most recent call last):",
+    );
+    await expect(errorPanel).toContainText("RuntimeError: sync test");
+
+    // Fix the error
+    await editor.fill('print("sync error fixed")');
+
+    // Run the fixed project
+    await runtime.start();
+
+    // Check the panel swaps back and prints
+    const outputPanel = page.getByRole("tabpanel", { name: "Output" });
+    await expect(outputPanel).toBeVisible();
+    await expect(outputPanel).toContainText("sync error fixed");
+  });
+
+  test("async error is handled", async () => {
+    // Edit the file to raise an error
+    const editor = page.getByRole("textbox");
+    await editor.fill(
+      [
+        "async def main():",
+        '    raise RuntimeError("async test")',
+        "",
+        "main()",
+      ].join("\n"),
+    );
+
+    // Start the project
+    await runtime.start();
+
+    // Check the error is printed
+    const errorPanel = page.getByRole("tabpanel", { name: "Errors" });
+    await expect(errorPanel).toBeVisible();
+    await expect(errorPanel).toContainText(
+      "Traceback (most recent call last):",
+    );
+    await expect(errorPanel).toContainText("RuntimeError: async test");
+
+    // Fix the error
+    await editor.fill(
+      [
+        "async def main():",
+        '    print("async error fixed")',
+        "",
+        "main()",
+      ].join("\n"),
+    );
+
+    // Run the fixed project
+    await runtime.start();
+
+    // Check the panel swaps back and prints
+    const outputPanel = page.getByRole("tabpanel", { name: "Output" });
+    await expect(outputPanel).toBeVisible();
+    await expect(outputPanel).toContainText("async error fixed");
   });
 });

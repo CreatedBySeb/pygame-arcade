@@ -90,6 +90,22 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
       break;
     }
 
+    case "errored": {
+      startedRef.value = false;
+
+      if (taskRunningRef.value) {
+        taskRunningRef.value = false;
+      }
+
+      if (stderrRef.value.length) {
+        stderrRef.value += "\n";
+      }
+
+      stderrRef.value += message.error;
+
+      break;
+    }
+
     case "exportedProject": {
       const file = message.file;
       const downloadAnchor = document.createElement("a");
@@ -114,6 +130,11 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
 
     case "finished": {
       startedRef.value = false;
+
+      if (taskRunningRef.value) {
+        taskRunningRef.value = false;
+      }
+
       break;
     }
 

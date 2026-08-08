@@ -96,6 +96,12 @@ export interface ContentsListMessage {
   path: string;
 }
 
+export interface ErroredMessage {
+  _type: "errored";
+  /** Information about the error that occurred */
+  error: string;
+}
+
 export interface ExportedProjectMessage {
   _type: "exportedProject";
   /** The generated zip file containing the project */
@@ -136,6 +142,7 @@ export interface TaskStartedMessage {
 
 export type OutgoingWorkerMessage =
   | ContentsListMessage
+  | ErroredMessage
   | ExportedProjectMessage
   | FileContentsMessage
   | FinishedMessage
