@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useStrippedPath } from "@/composables";
 import { createDir } from "@/runtime";
-import { getExtension, TEXT_EXTS } from "@/workerApi";
+import { getExtension, TEXT_EXTS } from "@/worker/api";
 import type { MessageProps } from "primevue";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";

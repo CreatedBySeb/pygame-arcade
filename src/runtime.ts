@@ -5,7 +5,7 @@ import {
   splitPath,
   type IncomingWorkerMessage,
   type OutgoingWorkerMessage,
-} from "@/workerApi";
+} from "@/worker/api";
 import { computed, reactive, readonly, ref, type ComputedRef } from "vue";
 
 const INTERRUPT_CLEAR: number = 0;
@@ -42,10 +42,13 @@ const stdoutRef = ref<string>("");
 const taskRunningRef = ref<boolean>(false);
 
 // Launch Pyodide in a worker for execution control and performance
-const pyodideWorker = new Worker(new URL("@/worker.ts", import.meta.url), {
-  name: "pyodideWorker",
-  type: "module",
-});
+const pyodideWorker = new Worker(
+  new URL("@/worker/index.ts", import.meta.url),
+  {
+    name: "pyodideWorker",
+    type: "module",
+  },
+);
 
 // Handle messages sent by the worker
 pyodideWorker.onmessage = async (event): Promise<void> => {

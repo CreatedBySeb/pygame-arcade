@@ -3,7 +3,7 @@ import { useStrippedPath } from "@/composables";
 import { focusEditor } from "@/editors";
 import { createFile } from "@/runtime";
 import newPythonTemplate from "@/templates/file.py?raw";
-import { getExtension, joinPath, PROJECT_ROOT, TEXT_EXTS } from "@/workerApi";
+import { getExtension, joinPath, PROJECT_ROOT, TEXT_EXTS } from "@/worker/api";
 import type { MessageProps } from "primevue";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";

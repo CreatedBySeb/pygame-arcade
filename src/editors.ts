@@ -1,5 +1,5 @@
 import { createFile } from "@/runtime";
-import { getExtension, PROJECT_ROOT } from "@/workerApi";
+import { getExtension, PROJECT_ROOT } from "@/worker/api";
 import {
   autocompletion,
   closeBrackets,

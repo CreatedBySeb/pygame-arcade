@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { focusedEditor, focusEditor } from "@/editors";
 import { pyodideLoaded, readFile } from "@/runtime";
-import { joinPath, PROJECT_ROOT } from "@/workerApi";
+import { joinPath, PROJECT_ROOT } from "@/worker/api";
 import { EditorView } from "@codemirror/view";
 import { onMounted, ref, useTemplateRef, watch } from "vue";
 

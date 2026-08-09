@@ -17,7 +17,7 @@ import {
   PROJECT_ROOT,
   splitPath,
   TEXT_EXTS,
-} from "@/workerApi";
+} from "@/worker/api";
 import Button from "primevue/button";
 import ButtonGroup from "primevue/buttongroup";
 import Tree, {

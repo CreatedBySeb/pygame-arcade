@@ -10,7 +10,7 @@ import {
   splitPath,
   type IncomingWorkerMessage,
   type OutgoingWorkerMessage,
-} from "@/workerApi";
+} from "@/worker/api";
 import { loadPyodide, type PyodideAPI } from "pyodide";
 import type { PyProxy } from "pyodide/ffi";
 

@@ -1,10 +1,10 @@
+import { stripPath } from "@/worker/api";
 import {
   computed,
   toValue,
   type ComputedRef,
   type MaybeRefOrGetter,
 } from "vue";
-import { stripPath } from "./workerApi";
 
 /**
  * A helper to create a computed ref for a stripped path

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useStrippedPath } from "@/composables";
 import { uploadFiles } from "@/runtime";
-import { TEXT_EXTS } from "@/workerApi";
+import { TEXT_EXTS } from "@/worker/api";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import FileUpload, { type FileUploadSelectEvent } from "primevue/fileupload";
