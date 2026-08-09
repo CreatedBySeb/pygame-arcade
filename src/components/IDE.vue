@@ -64,6 +64,15 @@ const projectMenuItems: Ref<MenuItem[]> = ref([
     class: "p-menu-item-danger",
     command: confirmErase,
   },
+  {
+    separator: true,
+  },
+  {
+    label: "View on GitHub",
+    icon: "pi pi-github",
+    url: "https://github.com/CreatedBySeb/pygame-arcade",
+    target: "_blank",
+  },
 ]);
 </script>
 

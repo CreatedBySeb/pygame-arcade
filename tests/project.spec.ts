@@ -77,4 +77,21 @@ test.describe("project", () => {
       "# Define the main function for your game",
     );
   });
+
+  test("open GitHub", async () => {
+    // Open project menu
+    const menu = await project.openProjectMenu();
+
+    // Click GitHub link
+    const newTabPromise = page.waitForEvent("popup");
+    await menu.getByRole("link", { name: "View on GitHub" }).click();
+
+    // Verify new tab is correct and original page hasn't changed
+    const tab = await newTabPromise;
+    await tab.waitForLoadState("load");
+    await expect(tab).toHaveURL(
+      "https://github.com/CreatedBySeb/pygame-arcade",
+    );
+    await expect(page).toHaveURL("/");
+  });
 });
