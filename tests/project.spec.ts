@@ -94,4 +94,21 @@ test.describe("project", () => {
     );
     await expect(page).toHaveURL("/");
   });
+
+  test("open feedback", async () => {
+    // Open project menu
+    const menu = await project.openProjectMenu();
+
+    // Click Feedback link
+    const newTabPromise = page.waitForEvent("popup");
+    await menu.getByRole("link", { name: "Provide Feedback" }).click();
+
+    // Verify new tab is correct and original page hasn't changed
+    const tab = await newTabPromise;
+    await tab.waitForLoadState("load");
+    await expect(tab).toHaveURL(
+      new URLPattern({ hostname: "docs.google.com" }),
+    );
+    await expect(page).toHaveURL("/");
+  });
 });

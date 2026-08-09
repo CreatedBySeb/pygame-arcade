@@ -68,6 +68,12 @@ const projectMenuItems: Ref<MenuItem[]> = ref([
     separator: true,
   },
   {
+    label: "Provide Feedback",
+    icon: "pi pi-comment",
+    url: "https://docs.google.com/forms/d/e/1FAIpQLScNm5_nLGwqfosjWbysuNAHcHriRjLXQlPIfa9xeaGTKCZnaQ/viewform?usp=publish-editor",
+    target: "_blank",
+  },
+  {
     label: "View on GitHub",
     icon: "pi pi-github",
     url: "https://github.com/CreatedBySeb/pygame-arcade",
