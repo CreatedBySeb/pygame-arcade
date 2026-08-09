@@ -7,6 +7,29 @@ import {
   type OutgoingWorkerMessage,
 } from "@/worker/api";
 import { computed, reactive, readonly, ref, type ComputedRef } from "vue";
+import { serialiseEvent } from "./worker/events";
+
+const CANVAS_EVENTS: (keyof HTMLElementEventMap)[] = [
+  "mousedown",
+  "mouseenter",
+  "mouseleave",
+  "mousemove",
+  "touchcancel",
+  "touchend",
+  "touchmove",
+  "touchstart",
+];
+
+const DOCUMENT_EVENTS: (keyof DocumentEventMap)[] = [
+  "keydown",
+  "keypress",
+  "keyup",
+  "mouseup",
+  "pointerlockchange",
+  "visibilitychange",
+];
+
+const WINDOW_EVENTS: (keyof WindowEventMap)[] = ["blur", "focus", "resize"];
 
 const INTERRUPT_CLEAR: number = 0;
 const INTERRUPT_SET: number = 2;
@@ -29,6 +52,14 @@ export type FSItem = Directory | ProjectFile;
 
 type PromiseFunctions<T> = [(value: T) => void, (reason: Error) => void];
 
+// Used for detecting changed canvas size to relay in events
+const canvasObserver = new ResizeObserver(([entry]) => {
+  postMessage({
+    _type: "canvasResize",
+    boundingRect: entry.target.getBoundingClientRect(),
+  });
+});
+
 const interruptBuf = new Uint8Array(new SharedArrayBuffer(1));
 const pendingReads: Record<string, PromiseFunctions<string>> = {};
 
@@ -40,6 +71,20 @@ const startedRef = ref<boolean>(false);
 const stderrRef = ref<string>("");
 const stdoutRef = ref<string>("");
 const taskRunningRef = ref<boolean>(false);
+
+// Register global event handlers for relaying events
+DOCUMENT_EVENTS.forEach((name) => {
+  document.addEventListener(
+    name,
+    (event) => relayEvent(event),
+    // Special handling since only pointerlockchange has options
+    name === "pointerlockchange" ? false : undefined,
+  );
+});
+
+WINDOW_EVENTS.forEach((name) => {
+  window.addEventListener(name, (event) => relayEvent(event));
+});
 
 // Launch Pyodide in a worker for execution control and performance
 const pyodideWorker = new Worker(
@@ -151,6 +196,11 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
       }
 
       refreshContents(PROJECT_ROOT);
+      break;
+    }
+
+    case "requestPointerLock": {
+      document.body.requestPointerLock(message.options);
       break;
     }
 
@@ -347,6 +397,20 @@ function postMessage(
 }
 
 /**
+ * Internal helper for relaying events with necessary data
+ * @param name The name of the event being relayed
+ * @param event The event to relay
+ */
+function relayEvent(event: Event): void {
+  const eventData = serialiseEvent(event);
+
+  postMessage({
+    _type: "relayEvent",
+    event: eventData,
+  });
+}
+
+/**
  * Internal helper for resetting project state, shared between erase and import
  */
 function resetProject() {
@@ -376,8 +440,25 @@ function sleep(duration: number): Promise<void> {
  * @param canvas The canvas element to transfer control over
  */
 function transferCanvasControl(canvas: HTMLCanvasElement): void {
+  // FIXME: Event listeners are never removed, so theoretically if another
+  //   canvas was set, there could be duplicates (though this seems unlikely
+  //   given the events being listened to)
+  CANVAS_EVENTS.forEach((name) => {
+    canvas.addEventListener(name, (event) => relayEvent(event));
+  });
+
+  canvasObserver.observe(canvas);
+
   const offscreen = canvas.transferControlToOffscreen();
-  postMessage({ _type: "setCanvas", canvas: offscreen }, [offscreen]);
+  postMessage(
+    {
+      _type: "setCanvas",
+      boundingRect: canvas.getBoundingClientRect(),
+      canvas: offscreen,
+      screenSize: [screen.width, screen.height],
+    },
+    [offscreen],
+  );
 }
 
 /**

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 import { Runtime } from "./helpers";
 
 const EXPECTED_FILES: RegExp[] = [
@@ -194,5 +195,44 @@ test.describe("core", () => {
       .locator("pre")
       .evaluate((el) => el.scrollTop / (el.scrollHeight - el.clientHeight));
     expect(scrollPercent).toBe(1);
+  });
+
+  test("pygame input works", async () => {
+    // Edit the file to run the input tester
+    const editor = page.getByRole("textbox");
+    await editor.fill(
+      await readFile(`${import.meta.dirname}/resources/input_test.py`, {
+        encoding: "utf-8",
+      }),
+    );
+
+    // Start the project
+    await runtime.start();
+
+    // Wait for the start indicator
+    const outputPanel = page.getByRole("tabpanel", { name: "Output" });
+    await expect(outputPanel).toContainText("Ready!");
+
+    // Test mouse
+    const canvas = page.locator("canvas");
+    await canvas.click({ position: { x: 10, y: 20 } });
+    await expect(outputPanel).toContainText(
+      // Positions don't match due to canvas scaling, but are consistent
+      ["Mouse Pressed: 1 (16, 33)", "Mouse Released: 1 (16, 33)"].join("\n"),
+    );
+
+    // Test keyboard
+    await canvas.press("a");
+    await expect(outputPanel).toContainText(
+      ["Key Pressed: a", "Key Released: a"].join("\n"),
+    );
+
+    // Test touch
+    const boundingBox = await canvas.boundingBox();
+    expect(boundingBox).not.toBeNull();
+    await page.touchscreen.tap(boundingBox!.x + 20, boundingBox!.y + 10);
+    await expect(outputPanel).toContainText(
+      ["Mouse Pressed: 1 (33, 16)", "Mouse Released: 1 (33, 16)"].join("\n"),
+    );
   });
 });

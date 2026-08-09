@@ -134,10 +134,10 @@ const projectMenuItems: Ref<MenuItem[]> = ref([
             :model="projectMenuItems"
           />
         </div>
+        <Window></Window>
         <Message v-show="!pyodideLoaded" severity="secondary">
           Loading Python...
         </Message>
-        <Window></Window>
       </div>
     </SplitterPanel>
   </Splitter>
