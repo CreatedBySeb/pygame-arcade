@@ -1,3 +1,4 @@
+import { proxyInDev } from "@/debug";
 import deleteProject from "@/scripts/delete_project.py?raw";
 import exportProject from "@/scripts/export_project.py?raw";
 import importProject from "@/scripts/import_project.py?raw";
@@ -12,6 +13,15 @@ import {
   type IncomingWorkerMessage,
   type OutgoingWorkerMessage,
 } from "@/worker/api";
+import {
+  DocumentStub,
+  fakeCanvas,
+  fakeEvent,
+  ScreenStub,
+  WindowStub,
+  type EventListeners,
+  type FakeCanvas,
+} from "@/worker/stubs";
 import { loadPyodide, type PyodideAPI } from "pyodide";
 import type { PyProxy } from "pyodide/ffi";
 
@@ -20,11 +30,24 @@ interface TaskLike extends PyProxy {
   cancel(msg?: string): void;
 }
 
+let canvas: FakeCanvas | null = null;
 let pyodide: PyodideAPI | null = null;
 let task: TaskLike | null = null;
 const decoder: TextDecoder = new TextDecoder();
-const dimensions: [number, number] = [640, 480];
 
+// Set up stubs for document, window and screen before loading Pyodide
+// See PYGAME-WORKER.md
+let eventListeners: EventListeners = {};
+
+const document = proxyInDev(new DocumentStub(eventListeners, () => canvas));
+const screen = proxyInDev(new ScreenStub());
+const window = proxyInDev(new WindowStub(eventListeners));
+
+(globalThis.document as any) = document;
+(globalThis.screen as any) = screen;
+(globalThis.window as any) = window;
+
+// Initialise pyodide
 const pyodideReady = loadPyodide({
   indexURL: `${import.meta.env.BASE_URL}assets/pyodide`,
   packageBaseUrl: `${self.location.protocol}//${self.location.host}/assets/wheels/`,
@@ -197,6 +220,14 @@ self.onmessage = async (event): Promise<void> => {
   const message = event.data as IncomingWorkerMessage;
 
   switch (message._type) {
+    case "canvasResize": {
+      if (canvas) {
+        canvas._boundingRect = message.boundingRect;
+      }
+
+      break;
+    }
+
     case "createDir": {
       pyodide.FS.mkdirTree(message.path);
       listDir(pyodide, message.path);
@@ -256,6 +287,17 @@ self.onmessage = async (event): Promise<void> => {
       break;
     }
 
+    case "relayEvent": {
+      const listeners = eventListeners[message.event.type] ?? [];
+
+      if (listeners.length) {
+        const event = fakeEvent(message.event);
+        listeners.forEach((listener) => listener(event));
+      }
+
+      break;
+    }
+
     case "run": {
       // FIXME: Handle indirectly started tasks?
       pyodide.runPython(invalidateImports);
@@ -297,36 +339,8 @@ self.onmessage = async (event): Promise<void> => {
     }
 
     case "setCanvas": {
-      const canvas = message.canvas as any;
-
-      // Shims to trick pyodide into accepting the OffscreenCanvas
-      // https://github.com/pyodide/pyodide/issues/3728
-      canvas.getBoundingClientRect = () => new DOMRect(0, 0, ...dimensions);
-      canvas.id = "canvas";
-      canvas.style = {};
-
-      (globalThis.document as any) = {
-        // This may prevent pointer locking from working
-        addEventListener(type: string, listener: Function, options: unknown) {
-          console.debug(
-            `Stubbed call to addEventListener("${type}", ${listener}, ${options})`,
-          );
-        },
-
-        // Pyodide shouldn't need any elements other than the canvas
-        querySelector(selector: string) {
-          console.debug(
-            `Stubbed call to querySelector(${selector}) to offscreen canvas`,
-          );
-          return canvas;
-        },
-      };
-
-      (globalThis.screen as any) = {
-        height: dimensions[1],
-        width: dimensions[0],
-      };
-
+      screen.setSize(...message.screenSize);
+      canvas = fakeCanvas(message.canvas, eventListeners, message.boundingRect);
       pyodide.canvas.setCanvas2D(canvas);
       break;
     }

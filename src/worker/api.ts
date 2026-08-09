@@ -1,6 +1,13 @@
 // --- Incoming Messages ---
 
+import type { SomeEventData } from "@/worker/events";
 import type { TypedArray } from "pyodide/ffi";
+
+export interface CanvasResizeMessage {
+  _type: "canvasResize";
+  /** The bounding client rect of the canvas */
+  boundingRect: DOMRect;
+}
 
 export interface CreateDirMessage {
   _type: "createDir";
@@ -42,14 +49,24 @@ export interface ReadFileMessage {
   path: string;
 }
 
+export interface RelayEventMessage {
+  _type: "relayEvent";
+  /** The event object that was relayed */
+  event: SomeEventData;
+}
+
 export interface RunMessage {
   _type: "run";
 }
 
 export interface SetCanvasMessage {
   _type: "setCanvas";
+  /** The bounding client rect of the canvas */
+  boundingRect: DOMRect;
   /** The offscreen canvas controlling the HTML canvas */
   canvas: OffscreenCanvas;
+  /** The size of the screen */
+  screenSize: [number, number];
 }
 
 export interface SetInterruptMessage {
@@ -71,6 +88,7 @@ export interface UploadFilesMessage {
 }
 
 export type IncomingWorkerMessage =
+  | CanvasResizeMessage
   | CreateDirMessage
   | CreateFileMessage
   | EraseProjectMessage
@@ -78,6 +96,7 @@ export type IncomingWorkerMessage =
   | ImportProjectMessage
   | ListContentsMessage
   | ReadFileMessage
+  | RelayEventMessage
   | RunMessage
   | SetCanvasMessage
   | SetInterruptMessage
@@ -124,6 +143,12 @@ export interface ReadyMessage {
   _type: "ready";
 }
 
+export interface RequestPointerLockMessage {
+  _type: "requestPointerLock";
+  /** The options to pass to the `requestPointerLock` call */
+  options: PointerLockOptions;
+}
+
 export interface StderrMessage {
   _type: "stderr";
   /** The UTF-8 decoded text from the stderr */
@@ -147,6 +172,7 @@ export type OutgoingWorkerMessage =
   | FileContentsMessage
   | FinishedMessage
   | ReadyMessage
+  | RequestPointerLockMessage
   | StderrMessage
   | StdoutMessage
   | TaskStartedMessage;
