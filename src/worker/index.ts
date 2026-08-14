@@ -31,6 +31,9 @@ const pyodideReady = loadPyodide({
   // Start loading pygame while doing other setup
   const pygamePromise = pyo.loadPackage(["pygame-ce"]);
 
+  // Enable debug in dev
+  pyo.setDebug(import.meta.env.DEV);
+
   // Workaround for https://github.com/pyodide/pyodide/issues/3697
   (pyo as any)._api._skip_unwind_fatal_error = true;
 
