@@ -11,11 +11,17 @@ const mountedRef = ref<boolean>(false);
 let view: EditorView | null = null;
 
 watch(focusedEditor, (state) => {
-  if (!view) return;
-
   if (state === null) {
-    view.destroy();
+    view?.destroy();
     view = null;
+  } else if (!pyodideLoaded.value) {
+    // Don't allow new views without Pyodide loaded but do allow closing
+    return;
+  } else if (!view) {
+    view = new EditorView({
+      state,
+      parent: containerRef.value!,
+    });
   } else if (state !== view.state) {
     view.setState(state);
   }

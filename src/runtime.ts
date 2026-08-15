@@ -6,8 +6,8 @@ import {
   type IncomingWorkerMessage,
   type OutgoingWorkerMessage,
 } from "@/worker/api";
+import { serialiseEvent } from "@/worker/events";
 import { computed, reactive, readonly, ref, type ComputedRef } from "vue";
-import { serialiseEvent } from "./worker/events";
 
 const CANVAS_EVENTS: (keyof HTMLElementEventMap)[] = [
   "mousedown",
@@ -256,6 +256,22 @@ export function createFile(
     path: joinPath([basePath, path]),
     contents,
   });
+}
+
+/**
+ * Deletes a file or directory in the file system
+ * @param path The file or directory path to delete
+ */
+export function deletePath(path: string): void {
+  const parts = splitPath(path);
+
+  if (!parts) {
+    throw Error(`Invalid deletion path '${path}'`);
+  }
+
+  postMessage({ _type: "delete", path: parts.slice(1).join("/") });
+  const target = walkPath("/" + parts.slice(0, -1).join("/"));
+  delete target.children[parts.pop()!];
 }
 
 /**

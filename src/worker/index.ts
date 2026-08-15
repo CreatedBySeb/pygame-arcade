@@ -1,5 +1,5 @@
 import { proxyInDev } from "@/debug";
-import deleteProject from "@/scripts/delete_project.py?raw";
+import deletePath from "@/scripts/delete_path.py?raw";
 import exportProject from "@/scripts/export_project.py?raw";
 import importProject from "@/scripts/import_project.py?raw";
 import invalidateImports from "@/scripts/invalidate_imports.py?raw";
@@ -23,7 +23,7 @@ import {
   type FakeCanvas,
 } from "@/worker/stubs";
 import { loadPyodide, type PyodideAPI } from "pyodide";
-import type { PyProxy } from "pyodide/ffi";
+import type { PyCallable, PyProxy } from "pyodide/ffi";
 
 interface TaskLike extends PyProxy {
   add_done_callback(callback: (future: PyProxy) => void): void;
@@ -115,11 +115,14 @@ async function bootstrapProject(pyo: PyodideAPI): Promise<void> {
 }
 
 /**
- * Erases all files in the project
+ * Erases all files in the provided path
  * @param pyo The loaded Pyodide instance
+ * @param path The path to delete, defaults to `""` which is the whole project
  */
-function eraseProject(pyo: PyodideAPI): void {
-  pyo.runPython(deleteProject);
+function erasePath(pyo: PyodideAPI, path: string = ""): void {
+  const func = pyo.runPython(deletePath) as PyCallable;
+  func(path);
+  func.destroy();
 }
 
 /**
@@ -244,8 +247,13 @@ self.onmessage = async (event): Promise<void> => {
       break;
     }
 
+    case "delete": {
+      erasePath(pyodide, message.path);
+      break;
+    }
+
     case "eraseProject": {
-      eraseProject(pyodide);
+      erasePath(pyodide);
       await bootstrapProject(pyodide);
 
       post({ _type: "ready" });
@@ -267,7 +275,7 @@ self.onmessage = async (event): Promise<void> => {
     }
 
     case "importProject": {
-      eraseProject(pyodide);
+      erasePath(pyodide);
       const importFunc = pyodide.runPython(importProject);
       importFunc(pyodide.toPy(await message.file.bytes()));
       await syncFS(pyodide, false).catch(console.error);

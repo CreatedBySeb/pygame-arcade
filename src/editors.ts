@@ -131,6 +131,22 @@ export function closeAllEditors(): void {
 }
 
 /**
+ * Dispose of an editor based on its path, defocusing it if focused
+ * @param path The path to the file to close
+ */
+export function closeEditor(path: string): void {
+  if (!(path in editorsRef)) {
+    return;
+  }
+
+  if (focusedPathRef.value === path) {
+    focusedPathRef.value = null;
+  }
+
+  delete editorsRef[path];
+}
+
+/**
  * Focuses an editor, creating it if it didn't exist already
  * @param path The path to the opened file
  * @param contents The contents of the opened file

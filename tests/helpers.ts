@@ -50,6 +50,23 @@ export class FileBrowser extends TestHelper {
   }
 
   /**
+   * Deletes the focused file
+   */
+  public async delete(): Promise<void> {
+    // Trigger the modal
+    await this.page.getByRole("button", { name: "Delete File/Folder" }).click();
+
+    // Find the modal and confirm
+    const modal = this.page
+      .getByRole("alertdialog")
+      .filter({ hasText: "Confirm Delete" });
+
+    // Confirm the action
+    await modal.getByRole("button", { name: "Confirm Delete" }).click();
+    await expect(modal).toBeHidden();
+  }
+
+  /**
    * Gets a tree item with the provided name, optionally within another item
    * @param name The name of the tree item
    * @param parent The parent tree item to search within, defaults to none
@@ -75,6 +92,14 @@ export class FileBrowser extends TestHelper {
       .filter({ hasText: title ?? button });
     await expect(modal).toBeVisible();
     return modal;
+  }
+
+  /**
+   * Refresh the files and folders
+   */
+  public async refresh(): Promise<void> {
+    // Click the button
+    await this.page.getByRole("button", { name: "Refresh Files" }).click();
   }
 
   /**

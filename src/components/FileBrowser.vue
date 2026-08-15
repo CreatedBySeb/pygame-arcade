@@ -2,8 +2,9 @@
 import CreateFile from "@/components/dialogs/CreateFile.vue";
 import CreateFolder from "@/components/dialogs/CreateFolder.vue";
 import UploadFile from "@/components/dialogs/UploadFile.vue";
-import { editedPath, focusEditor } from "@/editors";
+import { closeEditor, editedPath, focusEditor } from "@/editors";
 import {
+  deletePath,
   fileSystem,
   loadingPaths,
   readFile,
@@ -26,7 +27,10 @@ import Tree, {
   type TreeSelectionKeys,
 } from "primevue/tree";
 import type { TreeNode } from "primevue/treenode";
+import { useConfirm } from "primevue/useconfirm";
 import { computed, ref, watch } from "vue";
+
+const confirm = useConfirm();
 
 function convertContentsToNodes(contents: DirectoryContents): TreeNode[] {
   return Object.values(contents)
@@ -111,6 +115,30 @@ function toggleDir(path: string): void {
   if (!wasToggled) {
     refreshContents(path);
   }
+}
+
+function deleteSelected(): void {
+  const path = selectedPath.value;
+  if (!path) return;
+
+  confirm.require({
+    accept: () => {
+      deletePath(path);
+      closeEditor(path);
+    },
+    acceptProps: {
+      label: "Confirm Delete",
+      severity: "danger",
+    },
+    blockScroll: true,
+    header: "Confirm Delete",
+    icon: "pi pi-exclamation-triangle",
+    message: `Are you sure you want to delete '${path}'?`,
+    rejectProps: {
+      label: "Cancel",
+      severity: "secondary",
+    },
+  });
 }
 
 function emptyClick(): void {
@@ -215,6 +243,17 @@ function refresh() {
           @click="refresh"
         />
       </ButtonGroup>
+      <ButtonGroup>
+        <Button
+          :disabled="loading || !selectedPath"
+          icon="pi pi-trash"
+          aria-label="Delete File/Folder"
+          title="Delete File/Folder"
+          size="small"
+          severity="danger"
+          @click="deleteSelected"
+        />
+      </ButtonGroup>
     </div>
     <div class="tree-scroller" @click="emptyClick">
       <Tree
@@ -249,7 +288,10 @@ function refresh() {
   height: 100%;
 
   & #file-browser-controls {
+    display: flex;
     flex: 0 0 1em;
+    gap: 0.5rem;
+    justify-content: center;
     padding: 0.5rem;
     text-align: center;
   }

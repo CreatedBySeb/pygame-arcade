@@ -23,6 +23,12 @@ export interface CreateFileMessage {
   path: string;
 }
 
+export interface DeleteMessage {
+  _type: "delete";
+  /** The path to the file or directory to delete */
+  path: string;
+}
+
 export interface EraseProjectMessage {
   _type: "eraseProject";
 }
@@ -91,6 +97,7 @@ export type IncomingWorkerMessage =
   | CanvasResizeMessage
   | CreateDirMessage
   | CreateFileMessage
+  | DeleteMessage
   | EraseProjectMessage
   | ExportProjectMessage
   | ImportProjectMessage

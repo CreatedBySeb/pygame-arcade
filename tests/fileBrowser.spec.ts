@@ -116,6 +116,89 @@ test.describe("file browser", () => {
     await parentItem.click();
   });
 
+  test("delete file", async () => {
+    await fileBrowser.createFile("delete_file.py");
+
+    // Get the file
+    const file = await fileBrowser.getItem("delete_file.py");
+    await file.click();
+
+    // Delete the file
+    await fileBrowser.delete();
+
+    // Check no longer visible
+    await expect(file).toBeHidden();
+
+    // Refresh file browser
+    await fileBrowser.refresh();
+
+    // Check still not visible
+    await expect(file).toBeHidden();
+  });
+
+  test("delete folder", async () => {
+    await fileBrowser.createFolder("delete_folder");
+
+    // Get the folder
+    const folder = await fileBrowser.getItem("delete_folder");
+    await folder.click();
+
+    // Delete the folder
+    await fileBrowser.delete();
+
+    // Check no longer visible
+    await expect(folder).toBeHidden();
+
+    // Refresh file browser
+    await fileBrowser.refresh();
+
+    // Check still not visible
+    await expect(folder).toBeHidden();
+  });
+
+  test("delete nested", async () => {
+    await fileBrowser.createFile("delete_nested/nested_sub/nested_file.txt");
+
+    // Get the folder
+    const folder = await fileBrowser.getItem("delete_nested");
+    await folder.click({ position: { x: 50, y: 4 } }); // Ensure to click at top on target
+
+    // Delete the folder
+    await fileBrowser.delete();
+
+    // Check no longer visible
+    await expect(folder).toBeHidden();
+
+    // Refresh file browser
+    await fileBrowser.refresh();
+
+    // Check still not visible
+    await expect(folder).toBeHidden();
+  });
+
+  test("delete within", async () => {
+    await fileBrowser.createFile("delete_within/within.txt");
+
+    // Get the file
+    const file = await fileBrowser.getItem("within.txt");
+    await file.click();
+
+    // Delete the folder
+    await fileBrowser.delete();
+
+    // Check no longer visible
+    await expect(file).toBeHidden();
+
+    // Refresh file browser
+    await fileBrowser.refresh();
+
+    // Check still not visible
+    await expect(file).toBeHidden();
+
+    // Check folder still visible
+    await fileBrowser.getItem("delete_within");
+  });
+
   test("folder expands on toggle", async () => {
     // Create and focus folder
     await fileBrowser.createFolder("expand_toggle");
