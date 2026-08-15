@@ -86,6 +86,7 @@ test.describe("core", () => {
     // Edit the file
     const editor = page.getByRole("textbox");
     await editor.fill(marker);
+    await page.waitForTimeout(100); // FIXME: Brief wait for persistence consistency
 
     // Reload the page
     await runtime.loadEditor();
