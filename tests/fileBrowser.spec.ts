@@ -43,7 +43,8 @@ test.describe("file browser", () => {
     await fileBrowser.createFile("file.py");
 
     // Check for the new file
-    await fileBrowser.getItem("file.py");
+    const file = await fileBrowser.getItem("file.py");
+    await expect(file).toBeChecked();
 
     // Check content is switched
     await expect(page.getByRole("textbox")).toContainText(
@@ -56,10 +57,10 @@ test.describe("file browser", () => {
 
     // Check for the new parent folder
     const dirItem = await fileBrowser.getItem("file_with_path");
-    await dirItem.click();
 
     // Check for the new file
-    await fileBrowser.getItem("file.py", dirItem);
+    const file = await fileBrowser.getItem("file.py", dirItem);
+    await expect(file).toBeChecked();
   });
 
   test("create nested file with focus", async () => {
@@ -73,7 +74,8 @@ test.describe("file browser", () => {
     await fileBrowser.createFile("file.py");
 
     // Check for the new file
-    await fileBrowser.getItem("file.py", dirItem);
+    const fileItem = await fileBrowser.getItem("file.py", dirItem);
+    await expect(fileItem).toBeChecked();
 
     // Unfocus the folder for the next test
     await dirItem.click();

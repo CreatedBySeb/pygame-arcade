@@ -3,7 +3,7 @@ import { useStrippedPath } from "@/composables";
 import { focusEditor } from "@/editors";
 import { createFile } from "@/runtime";
 import newPythonTemplate from "@/templates/file.py?raw";
-import { getExtension, joinPath, PROJECT_ROOT, TEXT_EXTS } from "@/worker/api";
+import { getExtension, joinPath, TEXT_EXTS } from "@/worker/api";
 import type { MessageProps } from "primevue";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
@@ -62,7 +62,7 @@ function createTextFile(_: SubmitEvent): void {
   const template = newFileName.value.endsWith(".py") ? newPythonTemplate : "";
 
   createFile(props.basePath, newFileName.value, template);
-  focusEditor(joinPath([PROJECT_ROOT, newFileName.value]), template);
+  focusEditor(joinPath([props.basePath, newFileName.value]), template);
   newFileName.value = "";
   visible.value = false;
 }

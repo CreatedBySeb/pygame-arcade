@@ -14,6 +14,7 @@ import {
 import {
   getBaseName,
   getExtension,
+  joinPath,
   PROJECT_ROOT,
   splitPath,
   TEXT_EXTS,
@@ -108,19 +109,24 @@ async function onSelect(node: TreeNode) {
 }
 
 // If the edited path changes outside of selection, update selection
-watch([editedPath, items], ([path, nodes]) => {
+watch(editedPath, (path) => {
   // If there is no edited path or it is already selected
   if (!path || selectedItems.value[path]) return;
 
-  // Get the node from the tree
-  const node = nodes.find((item) => item.key === path);
-  if (!node) return;
-
+  // Clear previous selection
   const selection = Object.keys(selectedItems.value).pop();
   if (selection) {
     delete selectedItems.value[selection];
   }
 
+  // Ensure all intermediate directories are expanded
+  const parts = splitPath(path);
+  parts.slice(1, -1).forEach((_, i, array) => {
+    const dirPath = joinPath([PROJECT_ROOT, ...array.slice(0, i + 1)]);
+    expandedKeys.value[dirPath] = true;
+  });
+
+  // Set the selection
   selectedItems.value[path] = true;
 });
 
