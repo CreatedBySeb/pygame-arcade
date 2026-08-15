@@ -70,6 +70,21 @@ const items = computed<TreeNode[]>(() => {
 const expandedKeys = ref<TreeExpandedKeys>({});
 const selectedItems = ref<TreeSelectionKeys>({});
 
+const selectedPath = computed<string | undefined>({
+  get: () => Object.keys(selectedItems.value).pop(),
+  set(value) {
+    const current = selectedPath.value;
+
+    if (current) {
+      delete selectedItems.value[current];
+    }
+
+    if (value) {
+      selectedItems.value[value] = true;
+    }
+  },
+});
+
 // Either the selected directory or the parent of the selected file
 const selectedDir = computed<string>(() => {
   const selectedItem = Object.keys(selectedItems.value).pop();
@@ -98,6 +113,10 @@ function toggleDir(path: string): void {
   }
 }
 
+function emptyClick(): void {
+  selectedPath.value = undefined;
+}
+
 function onDeselect(node: TreeNode): void {
   // We don't actually deselect here to align with common IDE behaviour
 
@@ -110,14 +129,8 @@ function onDeselect(node: TreeNode): void {
 async function onSelect(node: TreeNode): Promise<void> {
   const path = node.key;
 
-  // Deselect previously selected item
-  const selectedItem = Object.keys(selectedItems.value).pop();
-  if (selectedItem) {
-    delete selectedItems.value[selectedItem];
-  }
-
   // Select new item
-  selectedItems.value[path] = true;
+  selectedPath.value = path;
 
   // If there is no selected path or it is already being edited
   if (!path || editedPath.value === path) {
@@ -141,12 +154,6 @@ watch(editedPath, (path) => {
   // If there is no edited path or it is already selected
   if (!path || selectedItems.value[path]) return;
 
-  // Clear previous selection
-  const selection = Object.keys(selectedItems.value).pop();
-  if (selection) {
-    delete selectedItems.value[selection];
-  }
-
   // Ensure all intermediate directories are expanded
   const parts = splitPath(path);
   parts.slice(1, -1).forEach((_, i, array) => {
@@ -155,7 +162,7 @@ watch(editedPath, (path) => {
   });
 
   // Set the selection
-  selectedItems.value[path] = true;
+  selectedPath.value = path;
 });
 
 function loadNode(node: TreeNode) {
@@ -209,16 +216,19 @@ function refresh() {
         />
       </ButtonGroup>
     </div>
-    <Tree
-      :loading="loading"
-      v-model:expanded-keys="expandedKeys"
-      :selection-keys="selectedItems"
-      selection-mode="single"
-      :value="items"
-      @node-expand="loadNode"
-      @node-select="onSelect"
-      @node-unselect="onDeselect"
-    />
+    <div class="tree-scroller" @click="emptyClick">
+      <Tree
+        :loading="loading"
+        v-model:expanded-keys="expandedKeys"
+        :selection-keys="selectedItems"
+        selection-mode="single"
+        :value="items"
+        @click.stop
+        @node-expand="loadNode"
+        @node-select="onSelect"
+        @node-unselect="onDeselect"
+      />
+    </div>
 
     <CreateFile v-model:visible="fileDialogVisible" :base-path="selectedDir" />
     <CreateFolder
@@ -242,6 +252,15 @@ function refresh() {
     flex: 0 0 1em;
     padding: 0.5rem;
     text-align: center;
+  }
+
+  & .tree-scroller {
+    flex: 1 1;
+    overflow-y: scroll;
+
+    & > .p-tree {
+      margin-bottom: 2rem;
+    }
   }
 }
 </style>

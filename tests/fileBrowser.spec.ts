@@ -153,4 +153,21 @@ test.describe("file browser", () => {
     await folder.click();
     await expect(file).toBeVisible();
   });
+
+  test("clicking empty space deselects", async () => {
+    // Ensure main.py is selected
+    const file = await fileBrowser.getItem("main.py");
+    await file.click();
+    await expect(file).toBeChecked();
+
+    // Click empty space
+    const tree = page.getByRole("tree");
+    const boundingBox = await tree.boundingBox();
+    expect(boundingBox).not.toBeNull();
+    const { height, x, y } = boundingBox!;
+    await page.click("body", { position: { x: x + 10, y: y + height + 10 } });
+
+    // Verify deselected
+    await expect(file).not.toBeChecked();
+  });
 });
