@@ -115,4 +115,42 @@ test.describe("file browser", () => {
     // Unfocus the folder for the next test
     await parentItem.click();
   });
+
+  test("folder expands on toggle", async () => {
+    // Create and focus folder
+    await fileBrowser.createFolder("expand_toggle");
+    const folder = await fileBrowser.getItem("expand_toggle");
+    await folder.click();
+
+    // Upload file
+    await fileBrowser.uploadFiles(`${import.meta.dirname}/resources/empty.txt`);
+    const file = await fileBrowser.getItem("empty.txt", folder);
+
+    // Collapse folder
+    await folder.getByRole("button").click();
+    await expect(file).toBeHidden();
+
+    // Expand folder
+    await folder.getByRole("button").click();
+    await expect(file).toBeVisible();
+  });
+
+  test("folder expands on select", async () => {
+    // Create and focus folder
+    await fileBrowser.createFolder("expand_select");
+    const folder = await fileBrowser.getItem("expand_select");
+    await folder.click();
+
+    // Upload file
+    await fileBrowser.uploadFiles(`${import.meta.dirname}/resources/empty.txt`);
+    const file = await fileBrowser.getItem("empty.txt", folder);
+
+    // Collapse folder
+    await folder.getByText("expand_select").click();
+    await expect(file).toBeHidden();
+
+    // Expand folder
+    await folder.click();
+    await expect(file).toBeVisible();
+  });
 });

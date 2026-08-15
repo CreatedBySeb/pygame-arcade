@@ -88,8 +88,36 @@ const selectedDir = computed<string>(() => {
   return selectedItem;
 });
 
-async function onSelect(node: TreeNode) {
+function toggleDir(path: string): void {
+  const wasToggled = expandedKeys.value[path] ?? false;
+  expandedKeys.value[path] = !wasToggled;
+
+  // Load the contents of an expanded directory
+  if (!wasToggled) {
+    refreshContents(path);
+  }
+}
+
+function onDeselect(node: TreeNode): void {
+  // We don't actually deselect here to align with common IDE behaviour
+
+  if (!node.leaf) {
+    // Toggle a dir on 'deselect' (click when already selected)
+    toggleDir(node.key);
+  }
+}
+
+async function onSelect(node: TreeNode): Promise<void> {
   const path = node.key;
+
+  // Deselect previously selected item
+  const selectedItem = Object.keys(selectedItems.value).pop();
+  if (selectedItem) {
+    delete selectedItems.value[selectedItem];
+  }
+
+  // Select new item
+  selectedItems.value[path] = true;
 
   // If there is no selected path or it is already being edited
   if (!path || editedPath.value === path) {
@@ -103,8 +131,8 @@ async function onSelect(node: TreeNode) {
     const contents = await readFile(path);
     focusEditor(path, contents);
   } else if (!node.leaf) {
-    // Toggle children when a directory is selected
-    expandedKeys.value[node.key] = !(expandedKeys.value[node.key] ?? false);
+    // Toggle a dir when selected
+    toggleDir(path);
   }
 }
 
@@ -181,11 +209,12 @@ function refresh() {
     <Tree
       :loading="loading"
       v-model:expanded-keys="expandedKeys"
-      v-model:selection-keys="selectedItems"
+      :selection-keys="selectedItems"
       selection-mode="single"
       :value="items"
       @node-expand="loadNode"
       @node-select="onSelect"
+      @node-unselect="onDeselect"
     />
 
     <CreateFile v-model:visible="fileDialogVisible" :base-path="selectedDir" />
