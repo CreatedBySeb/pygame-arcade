@@ -254,6 +254,7 @@ export async function interrupt(): Promise<void> {
     interruptBuf[0] = INTERRUPT_SET;
 
     // Wait for the buffer to clear, polling every 0.5s
+    // FIXME: should probably have an upper bound on this
     while (interruptBuf[0] !== INTERRUPT_CLEAR) {
       await sleep(500);
     }

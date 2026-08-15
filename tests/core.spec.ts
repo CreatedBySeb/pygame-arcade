@@ -67,7 +67,7 @@ test.describe("core", () => {
   test("edits affect execution", async () => {
     // Edit the file
     const editor = page.getByRole("textbox");
-    await editor.fill('print("hi")');
+    await editor.fill(["def main():", '    print("hi")'].join("\n"));
 
     // Start the project
     await runtime.start();
@@ -97,7 +97,9 @@ test.describe("core", () => {
   test("sync error is handled", async () => {
     // Edit the file to raise an error
     const editor = page.getByRole("textbox");
-    await editor.fill('raise RuntimeError("sync test")');
+    await editor.fill(
+      ["def main():", '    raise RuntimeError("sync test")'].join("\n"),
+    );
 
     // Start the project
     await runtime.start();
@@ -111,7 +113,9 @@ test.describe("core", () => {
     await expect(errorPanel).toContainText("RuntimeError: sync test");
 
     // Fix the error
-    await editor.fill('print("sync error fixed")');
+    await editor.fill(
+      ["def main():", '    print("sync error fixed")'].join("\n"),
+    );
 
     // Run the fixed project
     await runtime.start();
@@ -126,12 +130,7 @@ test.describe("core", () => {
     // Edit the file to raise an error
     const editor = page.getByRole("textbox");
     await editor.fill(
-      [
-        "async def main():",
-        '    raise RuntimeError("async test")',
-        "",
-        "main()",
-      ].join("\n"),
+      ["async def main():", '    raise RuntimeError("async test")'].join("\n"),
     );
 
     // Start the project
@@ -147,12 +146,7 @@ test.describe("core", () => {
 
     // Fix the error
     await editor.fill(
-      [
-        "async def main():",
-        '    print("async error fixed")',
-        "",
-        "main()",
-      ].join("\n"),
+      ["async def main():", '    print("async error fixed")'].join("\n"),
     );
 
     // Run the fixed project
@@ -164,10 +158,30 @@ test.describe("core", () => {
     await expect(outputPanel).toContainText("async error fixed");
   });
 
+  test("missing main displays error", async () => {
+    // Edit the file to be empty
+    const editor = page.getByRole("textbox");
+    await editor.fill("");
+
+    // Start the project
+    await runtime.start();
+
+    // Check the error is printed
+    const errorPanel = page.getByRole("tabpanel", { name: "Errors" });
+    await expect(errorPanel).toBeVisible();
+    await expect(errorPanel).toContainText(
+      "SystemError: main.py does not have a function 'main' to run",
+    );
+  });
+
   test("console scroll follows output", async () => {
     // Edit the file to print 100 lines
     const editor = page.getByRole("textbox");
-    await editor.fill(["for _ in range(100):", '    print("hi")'].join("\n"));
+    await editor.fill(
+      ["def main(): ", "    for _ in range(100):", '        print("hi")'].join(
+        "\n",
+      ),
+    );
 
     // Start the project
     await runtime.start();

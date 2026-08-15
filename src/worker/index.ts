@@ -2,6 +2,7 @@ import deleteProject from "@/scripts/delete_project.py?raw";
 import exportProject from "@/scripts/export_project.py?raw";
 import importProject from "@/scripts/import_project.py?raw";
 import invalidateImports from "@/scripts/invalidate_imports.py?raw";
+import runProject from "@/scripts/run_project.py?raw";
 import mainTemplate from "@/templates/main.py?raw";
 import {
   assertNever,
@@ -14,7 +15,7 @@ import {
 import { loadPyodide, type PyodideAPI } from "pyodide";
 import type { PyProxy } from "pyodide/ffi";
 
-interface TaskLike {
+interface TaskLike extends PyProxy {
   add_done_callback(callback: (future: PyProxy) => void): void;
   cancel(msg?: string): void;
 }
@@ -119,6 +120,10 @@ function handleCompletion(future: PyProxy): void {
     reportException(exception);
   } else {
     post({ _type: "finished" });
+  }
+
+  if (task === future) {
+    task = null;
   }
 }
 
@@ -253,16 +258,11 @@ self.onmessage = async (event): Promise<void> => {
 
     case "run": {
       // FIXME: Handle indirectly started tasks?
-      const mainContents = pyodide.FS.readFile(
-        joinPath([PROJECT_ROOT, "main.py"]),
-        { encoding: "utf8" },
-      );
-
       pyodide.runPython(invalidateImports);
       let maybeCoroutine: PyProxy;
 
       try {
-        maybeCoroutine = pyodide.runPython(mainContents);
+        maybeCoroutine = pyodide.runPython(runProject);
       } catch (e) {
         if (e instanceof pyodide.ffi.PythonError) {
           reportException();
@@ -286,6 +286,9 @@ self.onmessage = async (event): Promise<void> => {
         task = webloop.create_task(maybeCoroutine) as TaskLike;
         task.add_done_callback(handleCompletion);
         post({ _type: "taskStarted" });
+
+        webloop.destroy();
+        maybeCoroutine.destroy();
       } else {
         post({ _type: "finished" });
       }
@@ -336,7 +339,6 @@ self.onmessage = async (event): Promise<void> => {
     case "stop": {
       if (task) {
         task.cancel();
-        task = null;
       }
 
       break;

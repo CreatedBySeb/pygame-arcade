@@ -2,13 +2,12 @@ import asyncio
 
 import pygame
 
-
 BACKGROUND_COLOUR: pygame.Color = pygame.Color("black")
 CANVAS_SIZE: tuple[int, int] = (640, 480)
 FRAME_DELAY: float = 1.0 / 60.0
 
 
-# Define the main function for your game
+# Define the main function for your game which will be run automatically
 async def main() -> None:
     # Set up pygame with the canvas size
     pygame.init()
@@ -35,7 +34,3 @@ async def main() -> None:
 
         # Wait for a small amount of time to allow the browser to process
         await asyncio.sleep(FRAME_DELAY)
-
-
-# Run it!
-main()
