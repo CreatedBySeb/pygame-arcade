@@ -139,13 +139,13 @@ async function onSelect(node: TreeNode): Promise<void> {
 
   const extension = getExtension(path);
 
-  if (TEXT_EXTS.includes(extension ?? "")) {
+  if (!node.leaf) {
+    // Toggle a dir when selected
+    toggleDir(path);
+  } else if (TEXT_EXTS.includes(extension ?? "")) {
     // Focus the editor when a text file is selected
     const contents = await readFile(path);
     focusEditor(path, contents);
-  } else if (!node.leaf) {
-    // Toggle a dir when selected
-    toggleDir(path);
   }
 }
 
