@@ -174,13 +174,13 @@ function refresh() {
 <template>
   <div id="file-browser">
     <div id="file-browser-controls">
-      <span>File Browser</span>
       <ButtonGroup>
         <Button
           :disabled="loading"
           icon="pi pi-upload"
           aria-label="Upload File"
           title="Upload File"
+          size="small"
           @click="uploadDialogVisible = true"
         />
         <Button
@@ -188,6 +188,7 @@ function refresh() {
           icon="pi pi-file-plus"
           aria-label="Create Text File"
           title="Create Text File"
+          size="small"
           @click="fileDialogVisible = true"
         />
         <Button
@@ -195,6 +196,7 @@ function refresh() {
           icon="pi pi-folder-plus"
           aria-label="Create Folder"
           title="Create Folder"
+          size="small"
           @click="folderDialogVisible = true"
         />
         <Button
@@ -202,6 +204,7 @@ function refresh() {
           icon="pi pi-sync"
           aria-label="Refresh Files"
           title="Refresh Files"
+          size="small"
           @click="refresh"
         />
       </ButtonGroup>
@@ -236,10 +239,9 @@ function refresh() {
   height: 100%;
 
   & #file-browser-controls {
-    display: flex;
     flex: 0 0 1em;
-    justify-content: space-between;
     padding: 0.5rem;
+    text-align: center;
   }
 }
 </style>
