@@ -110,7 +110,7 @@ export function serialiseEvent(event: Event): SomeEventData {
     return serialiseKeyEvent(event);
   } else if (event instanceof MouseEvent) {
     return serialiseMouseEvent(event);
-  } else if (event instanceof TouchEvent) {
+  } else if ("TouchEvent" in window && event instanceof TouchEvent) {
     return serialiseTouchEvent(event);
   } else if (event.constructor === Event) {
     return serialiseBaseEvent<
