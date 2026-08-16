@@ -12,8 +12,9 @@ const props = defineProps<{
 }>();
 
 const ALLOWED_FILES = [
-  "image/*",
   "audio/*",
+  "font/*",
+  "image/*",
   ...TEXT_EXTS.map((ext) => "." + ext),
 ].join(",");
 
