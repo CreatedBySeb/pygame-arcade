@@ -127,6 +127,7 @@ function deleteSelected(): void {
     accept: () => {
       deletePath(path);
       closeEditor(path);
+      invalidateExpansions(path);
     },
     acceptProps: {
       label: "Confirm Delete",
@@ -153,6 +154,15 @@ function onDeselect(node: TreeNode): void {
   if (!node.leaf) {
     // Toggle a dir on 'deselect' (click when already selected)
     toggleDir(node.key);
+  }
+}
+
+function invalidateExpansions(path: string): void {
+  // Remove any expanded keys under a path (e.g. for rename or delete)
+  for (const key of Object.keys(expandedKeys.value)) {
+    if (key.startsWith(path)) {
+      delete expandedKeys.value[key];
+    }
   }
 }
 
@@ -300,6 +310,7 @@ function refresh() {
       v-model:visible="renameDialogVisible"
       :original-path="selectedPath!"
       :directory="selectedPath == selectedDir"
+      @confirmed="invalidateExpansions"
     />
   </div>
 </template>

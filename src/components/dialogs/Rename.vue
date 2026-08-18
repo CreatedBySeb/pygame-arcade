@@ -19,6 +19,10 @@ const visible = defineModel<boolean>("visible", {
   default: false,
 });
 
+const emit = defineEmits<{
+  confirmed: [originalPath: string, newPath: string];
+}>();
+
 const newName = ref<string>("");
 const friendlyPath = useStrippedPath(() => props.originalPath ?? "");
 
@@ -60,6 +64,7 @@ async function rename(_: SubmitEvent): Promise<void> {
   }
 
   renamePath(props.originalPath, newName.value);
+  emit("confirmed", props.originalPath, newName.value);
 
   newName.value = "";
   visible.value = false;
