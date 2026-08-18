@@ -1,5 +1,6 @@
 import {
   expect,
+  type ConsoleMessage,
   type Download,
   type Locator,
   type Page,
@@ -11,6 +12,36 @@ import {
  * This seems to take a while on headless Firefox
  */
 const LOAD_TIMEOUT = 60_000;
+
+/**
+ * An error thrown when the browser logs a console error during a test
+ */
+class ConsoleLogError extends Error {
+  public consoleMessage: ConsoleMessage;
+  public readonly name = "ConsoleLogError";
+
+  constructor(message: ConsoleMessage) {
+    const thread = message.worker() ? "worker" : "main";
+    const { column, line, url } = message.location();
+    super(
+      `Console error logged at ${url}:${line}:${column} by ${thread} thread: ${message.text()}`,
+    );
+    this.consoleMessage = message;
+  }
+}
+
+/**
+ * An error thrown when there is an uncaught exception thrown during a test
+ */
+class UncaughtExceptionError extends Error {
+  public cause: Error;
+  public readonly name = "UncaughtExceptionError";
+
+  constructor(cause: Error) {
+    super(`Error thrown: ${cause.message}\n${cause.stack}`);
+    this.cause = cause;
+  }
+}
 
 class TestHelper {
   protected page: Page;
@@ -256,4 +287,21 @@ export class Runtime extends TestHelper {
       timeout: LOAD_TIMEOUT,
     });
   }
+}
+
+/**
+ * Adds a handler to throw an error if the browser logs to the console during a
+ * test or there is an uncaught exception
+ * @param page The page to configure the handlers on
+ */
+export function failOnErrors(page: Page): void {
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      throw new ConsoleLogError(message);
+    }
+  });
+
+  page.on("pageerror", (err) => {
+    throw new UncaughtExceptionError(err);
+  });
 }

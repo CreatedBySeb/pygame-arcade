@@ -1,5 +1,5 @@
 import test, { expect, type Page } from "@playwright/test";
-import { FileBrowser, Runtime } from "./helpers";
+import { FileBrowser, Runtime, failOnErrors } from "./helpers";
 
 test.describe("file browser", () => {
   test.describe.configure({ mode: "serial" });
@@ -10,8 +10,11 @@ test.describe("file browser", () => {
 
   test.beforeAll(async ({ browser }) => {
     page = await browser.newPage();
+    failOnErrors(page);
+
     fileBrowser = new FileBrowser(page);
     runtime = new Runtime(page);
+
     await runtime.loadEditor();
   });
 

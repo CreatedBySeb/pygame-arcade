@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
-import { Runtime } from "./helpers";
+import { Runtime, failOnErrors } from "./helpers";
 
 const EXPECTED_FILES: RegExp[] = [
   /\/pyodide-lock.json$/,
@@ -10,6 +10,8 @@ const EXPECTED_FILES: RegExp[] = [
 ];
 
 test("loads runtime", async ({ page }) => {
+  failOnErrors(page);
+
   const runtime = new Runtime(page);
   await page.goto("/");
 
@@ -43,6 +45,8 @@ test.describe("core", () => {
 
   test.beforeAll(async ({ browser }) => {
     page = await browser.newPage();
+    failOnErrors(page);
+
     runtime = new Runtime(page);
     await runtime.loadEditor();
   });

@@ -2,7 +2,7 @@ import test, { expect, type Page } from "@playwright/test";
 import { createHash } from "node:crypto";
 import type Stream from "node:stream";
 import { openPromise } from "yauzl";
-import { FileBrowser, Project, Runtime } from "./helpers";
+import { FileBrowser, Project, Runtime, failOnErrors } from "./helpers";
 
 // SHA-256 hash for the main.py file in the template
 const MAIN_PY_HASH =
@@ -16,9 +16,12 @@ test.describe("project", () => {
 
   test.beforeAll(async ({ browser }) => {
     page = await browser.newPage();
+    failOnErrors(page);
+
     fileBrowser = new FileBrowser(page);
     project = new Project(page);
     runtime = new Runtime(page);
+
     await runtime.loadEditor();
   });
 
