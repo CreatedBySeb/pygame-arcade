@@ -86,7 +86,7 @@ const projectMenuItems: Ref<MenuItem[]> = ref([
   <Splitter id="ide">
     <SplitterPanel :size="70" :min-size="50">
       <Splitter>
-        <SplitterPanel :size="25" :min-size="15">
+        <SplitterPanel class="file-panel" :size="25" :min-size="15">
           <FileBrowser></FileBrowser>
         </SplitterPanel>
         <SplitterPanel :size="75" :min-size="60">
@@ -152,6 +152,10 @@ const projectMenuItems: Ref<MenuItem[]> = ref([
 
   & #control-buttons {
     padding: 0.5rem;
+  }
+
+  & .file-panel {
+    min-width: 14rem;
   }
 
   & .p-message {
