@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import CreateFile from "@/components/dialogs/CreateFile.vue";
 import CreateFolder from "@/components/dialogs/CreateFolder.vue";
+import Rename from "@/components/dialogs/Rename.vue";
 import UploadFile from "@/components/dialogs/UploadFile.vue";
 import { closeEditor, editedPath, focusEditor } from "@/editors";
 import {
@@ -61,6 +62,7 @@ function sortItems(a: FSItem, b: FSItem): number {
 
 const fileDialogVisible = ref<boolean>(false);
 const folderDialogVisible = ref<boolean>(false);
+const renameDialogVisible = ref<boolean>(false);
 const uploadDialogVisible = ref<boolean>(false);
 
 const loading = computed<boolean>(() => {
@@ -177,6 +179,14 @@ async function onSelect(node: TreeNode): Promise<void> {
   }
 }
 
+function renameSelected(): void {
+  const path = selectedPath.value;
+
+  if (path) {
+    renameDialogVisible.value = true;
+  }
+}
+
 // If the edited path changes outside of selection, update selection
 watch(editedPath, (path) => {
   // If there is no edited path or it is already selected
@@ -246,6 +256,14 @@ function refresh() {
       <ButtonGroup>
         <Button
           :disabled="loading || !selectedPath"
+          icon="pi pi-pencil"
+          aria-label="Rename File/Folder"
+          title="Rename File/Folder"
+          size="small"
+          @click="renameSelected"
+        />
+        <Button
+          :disabled="loading || !selectedPath"
           icon="pi pi-trash"
           aria-label="Delete File/Folder"
           title="Delete File/Folder"
@@ -277,6 +295,11 @@ function refresh() {
     <UploadFile
       v-model:visible="uploadDialogVisible"
       :base-path="selectedDir"
+    />
+    <Rename
+      v-model:visible="renameDialogVisible"
+      :original-path="selectedPath!"
+      :directory="selectedPath == selectedDir"
     />
   </div>
 </template>

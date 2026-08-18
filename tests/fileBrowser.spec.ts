@@ -199,6 +199,93 @@ test.describe("file browser", () => {
     await fileBrowser.getItem("delete_within");
   });
 
+  test("rename file", async () => {
+    await fileBrowser.createFile("rename_file.txt");
+
+    // Get the file
+    const file = await fileBrowser.getItem("rename_file.txt");
+    await file.click();
+
+    // Rename the folder
+    await fileBrowser.rename("renamed_file.py", true);
+
+    // Check renamed
+    const renamed = await fileBrowser.getItem("renamed_file.py");
+    await expect(renamed).toBeVisible();
+    await expect(file).toBeHidden();
+
+    // Edit the file
+    await page.getByRole("textbox").fill("# Renamed file");
+
+    // Refresh file browser
+    await fileBrowser.refresh();
+
+    // Check still renamed
+    await expect(renamed).toBeVisible();
+    await expect(file).toBeHidden();
+  });
+
+  test("rename folder", async () => {
+    await fileBrowser.createFile("rename_folder/rename_child.txt");
+
+    // Get the folder
+    const folder = await fileBrowser.getItem("rename_folder");
+    const child = await fileBrowser.getItem("rename_child.txt", folder);
+    await folder.click({ position: { x: 50, y: 4 } }); // Ensure to click at top on target
+
+    // Rename the folder
+    await fileBrowser.rename("renamed_folder", false);
+
+    // Check renamed
+    const renamed = await fileBrowser.getItem("renamed_folder");
+    const renamedChild = await fileBrowser.getItem("rename_child.txt", renamed);
+    await expect(renamed).toBeVisible();
+    await expect(renamedChild).toBeVisible();
+    await expect(folder).toBeHidden();
+    await expect(child).toBeHidden();
+
+    // Edit the file
+    await page.getByRole("textbox").fill("# Renamed folder child");
+
+    // Refresh file browser
+    await fileBrowser.refresh();
+
+    // Check still renamed
+    await expect(renamed).toBeVisible();
+    await expect(renamedChild).toBeVisible();
+    await expect(folder).toBeHidden();
+    await expect(child).toBeHidden();
+  });
+
+  test("rename within", async () => {
+    await fileBrowser.createFile("rename_within/rename_target.txt");
+
+    // Get the file
+    const folder = await fileBrowser.getItem("rename_within");
+    const child = await fileBrowser.getItem("rename_target.txt", folder);
+    await child.click();
+
+    // Rename the folder
+    await fileBrowser.rename("renamed_target.py", true);
+
+    // Check renamed
+    const renamed = await fileBrowser.getItem("renamed_target.py", folder);
+    await expect(renamed).toBeVisible();
+    await expect(folder).toBeVisible();
+    await expect(child).toBeHidden();
+
+    // Edit the file
+    await page.getByRole("textbox").fill("# Renamed file within");
+
+    // Refresh file browser
+    await fileBrowser.refresh();
+
+    // Check still renamed
+    await expect(renamed).toBeVisible();
+    await expect(folder).toBeVisible();
+    await expect(child).toBeHidden();
+  });
+
   test("folder expands on toggle", async () => {
     // Create and focus folder
     await fileBrowser.createFolder("expand_toggle");

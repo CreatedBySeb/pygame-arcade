@@ -50,16 +50,18 @@ export class FileBrowser extends TestHelper {
   }
 
   /**
-   * Deletes the focused file
+   * Deletes the focused file or folder
    */
   public async delete(): Promise<void> {
     // Trigger the modal
     await this.page.getByRole("button", { name: "Delete File/Folder" }).click();
 
-    // Find the modal and confirm
+    // Find the modal
     const modal = this.page
       .getByRole("alertdialog")
       .filter({ hasText: "Confirm Delete" });
+
+    await expect(modal).toBeVisible();
 
     // Confirm the action
     await modal.getByRole("button", { name: "Confirm Delete" }).click();
@@ -87,9 +89,11 @@ export class FileBrowser extends TestHelper {
    */
   public async openModal(button: string, title?: string): Promise<Locator> {
     await this.page.getByRole("button", { name: button }).click();
+
     const modal = this.page
       .getByRole("dialog")
       .filter({ hasText: title ?? button });
+
     await expect(modal).toBeVisible();
     return modal;
   }
@@ -100,6 +104,24 @@ export class FileBrowser extends TestHelper {
   public async refresh(): Promise<void> {
     // Click the button
     await this.page.getByRole("button", { name: "Refresh Files" }).click();
+  }
+
+  /**
+   * Renames the focused file or folder
+   * @param name The new name
+   */
+  public async rename(name: string, file: boolean): Promise<void> {
+    const noun = file ? "File" : "Folder";
+
+    // Trigger the modal
+    const modal = await this.openModal("Rename File/Folder", "Rename " + noun);
+
+    // Fill in the new name
+    await modal.getByRole("textbox").fill(name);
+
+    // Confirm the action
+    await modal.getByRole("button", { name: "Rename" }).click();
+    await expect(modal).toBeHidden();
   }
 
   /**

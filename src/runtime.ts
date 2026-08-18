@@ -360,6 +360,23 @@ export function refreshContents(path: string) {
 }
 
 /**
+ * Renames a file or directory in the file system
+ * @param path The file or directory path to rename
+ * @param name The new name of the file or directory
+ */
+export function renamePath(path: string, name: string): void {
+  const parts = splitPath(path);
+
+  if (!parts) {
+    throw Error(`Invalid rename path '${path}'`);
+  }
+
+  postMessage({ _type: "rename", name, path });
+  const target = walkPath("/" + parts.slice(0, -1).join("/"));
+  delete target.children[parts.pop()!];
+}
+
+/**
  * Transfers control of the specified canvas element to the Pyodide worker and
  * sets it up for use with Pygame
  *

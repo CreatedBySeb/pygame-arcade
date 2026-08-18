@@ -306,6 +306,24 @@ self.onmessage = async (event): Promise<void> => {
       break;
     }
 
+    case "rename": {
+      const newPath =
+        "/" + joinPath([...splitPath(message.path).slice(0, -1), message.name]);
+
+      pyodide.FS.rename(message.path, newPath);
+
+      const { node } = pyodide.FS.lookupPath(newPath, {});
+
+      if (node.isFolder) {
+        listDir(pyodide, newPath);
+      } else {
+        const parent = "/" + joinPath(splitPath(newPath).slice(0, -1));
+        listDir(pyodide, parent);
+      }
+
+      break;
+    }
+
     case "run": {
       // FIXME: Handle indirectly started tasks?
       pyodide.runPython(invalidateImports);

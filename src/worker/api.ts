@@ -61,6 +61,14 @@ export interface RelayEventMessage {
   event: SomeEventData;
 }
 
+export interface RenameMessage {
+  _type: "rename";
+  /** The new name */
+  name: string;
+  /** The path to the file or directory to rename */
+  path: string;
+}
+
 export interface RunMessage {
   _type: "run";
 }
@@ -104,6 +112,7 @@ export type IncomingWorkerMessage =
   | ListContentsMessage
   | ReadFileMessage
   | RelayEventMessage
+  | RenameMessage
   | RunMessage
   | SetCanvasMessage
   | SetInterruptMessage
