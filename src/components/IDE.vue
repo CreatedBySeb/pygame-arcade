@@ -48,6 +48,18 @@ function confirmErase() {
   });
 }
 
+function run() {
+  // Blur the currently focused element, which should be the run button, to
+  // avoid accidentally retriggering it
+  const focused = document.activeElement;
+
+  if (focused instanceof HTMLElement) {
+    focused.blur();
+  }
+
+  runProgram();
+}
+
 const menu = useTemplateRef("projectMenu");
 const menuItems: Ref<MenuItem[]> = ref([
   {
@@ -122,7 +134,7 @@ const menuItems: Ref<MenuItem[]> = ref([
             :disabled="!pyodideLoaded"
             icon="pi pi-play"
             label="Run it!"
-            @click="runProgram"
+            @click="run"
           />
           <Button
             severity="secondary"

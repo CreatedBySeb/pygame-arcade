@@ -62,6 +62,11 @@ test.describe("core", () => {
     // Start the project
     await runtime.start();
 
+    // Check the start button does not retain focus
+    await expect(
+      page.getByRole("button", { name: "Run it!" }),
+    ).not.toBeFocused();
+
     // Check the pygame-ce message is printed
     const outputPanel = page.getByRole("tabpanel", { name: "Output" });
     await expect(outputPanel).toContainText(
