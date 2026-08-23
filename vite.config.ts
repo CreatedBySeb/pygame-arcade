@@ -1,4 +1,5 @@
 import vue from "@vitejs/plugin-vue";
+import { execSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type PluginOption } from "vite";
@@ -31,6 +32,11 @@ function copyPyodideAssets(): PluginOption {
 
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __GIT_COMMIT__: JSON.stringify(
+      execSync("git rev-parse --short HEAD").toString().trim(),
+    ),
+  },
   optimizeDeps: { exclude: ["pyodide"] },
   plugins: [vue(), copyPyodideAssets()],
   resolve: {

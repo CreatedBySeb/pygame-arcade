@@ -3,6 +3,7 @@ import Console from "@/components/Console.vue";
 import Editor from "@/components/Editor.vue";
 import FileBrowser from "@/components/FileBrowser.vue";
 import Window from "@/components/Window.vue";
+import About from "@/components/dialogs/About.vue";
 import ImportProject from "@/components/dialogs/ImportProject.vue";
 import { closeAllEditors } from "@/editors";
 import {
@@ -22,6 +23,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { ref, useTemplateRef, type Ref } from "vue";
 
 const confirm = useConfirm();
+const aboutVisible = ref(false);
 const importVisible = ref(false);
 
 function confirmErase() {
@@ -46,38 +48,50 @@ function confirmErase() {
   });
 }
 
-const projectMenu = useTemplateRef("projectMenu");
-const projectMenuItems: Ref<MenuItem[]> = ref([
+const menu = useTemplateRef("projectMenu");
+const menuItems: Ref<MenuItem[]> = ref([
   {
-    label: "Download as Zip",
-    icon: "pi pi-download",
-    command: downloadProject,
+    label: "Project",
+    items: [
+      {
+        label: "Download as Zip",
+        icon: "pi pi-download",
+        command: downloadProject,
+      },
+      {
+        label: "Import from Zip",
+        icon: "pi pi-upload",
+        command: () => (importVisible.value = true),
+      },
+      {
+        label: "Erase all Files",
+        icon: "pi pi-eraser",
+        class: "p-menu-item-danger",
+        command: confirmErase,
+      },
+    ],
   },
   {
-    label: "Import from Zip",
-    icon: "pi pi-upload",
-    command: () => (importVisible.value = true),
-  },
-  {
-    label: "Erase all Files",
-    icon: "pi pi-eraser",
-    class: "p-menu-item-danger",
-    command: confirmErase,
-  },
-  {
-    separator: true,
-  },
-  {
-    label: "Provide Feedback",
-    icon: "pi pi-comment",
-    url: "https://docs.google.com/forms/d/e/1FAIpQLScNm5_nLGwqfosjWbysuNAHcHriRjLXQlPIfa9xeaGTKCZnaQ/viewform?usp=publish-editor",
-    target: "_blank",
-  },
-  {
-    label: "View on GitHub",
-    icon: "pi pi-github",
-    url: "https://github.com/CreatedBySeb/pygame-arcade",
-    target: "_blank",
+    label: "Pygame Arcade",
+    items: [
+      {
+        label: "About",
+        icon: "pi pi-info-circle",
+        command: () => (aboutVisible.value = true),
+      },
+      {
+        label: "Provide Feedback",
+        icon: "pi pi-comment",
+        url: "https://docs.google.com/forms/d/e/1FAIpQLScNm5_nLGwqfosjWbysuNAHcHriRjLXQlPIfa9xeaGTKCZnaQ/viewform?usp=publish-editor",
+        target: "_blank",
+      },
+      {
+        label: "View on GitHub",
+        icon: "pi pi-github",
+        url: "https://github.com/CreatedBySeb/pygame-arcade",
+        target: "_blank",
+      },
+    ],
   },
 ]);
 </script>
@@ -122,16 +136,16 @@ const projectMenuItems: Ref<MenuItem[]> = ref([
             :disabled="!pyodideLoaded"
             icon="pi pi-chevron-down"
             icon-pos="right"
-            label="Project"
+            label="Menu"
             aria-haspopup
             aria-controls="project-menu"
-            @click="projectMenu?.toggle"
+            @click="menu?.toggle"
           />
           <Menu
             id="project-menu"
             ref="projectMenu"
             :popup="true"
-            :model="projectMenuItems"
+            :model="menuItems"
           />
         </div>
         <Window></Window>
@@ -141,6 +155,7 @@ const projectMenuItems: Ref<MenuItem[]> = ref([
       </div>
     </SplitterPanel>
   </Splitter>
+  <About v-model:visible="aboutVisible" />
   <ImportProject v-model:visible="importVisible" />
 </template>
 

@@ -81,6 +81,30 @@ test.describe("project", () => {
     );
   });
 
+  test("open about dialog", async () => {
+    // Open project menu
+    const menu = await project.openProjectMenu();
+
+    // Click about item
+    await menu.getByRole("menuitem", { name: "About" }).click();
+
+    // Check modal
+    const dialog = page.getByRole("dialog", { name: "About Pygame Arcade" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText(/Built from commit: [0-9a-f]{7}/);
+    await expect(dialog).toContainText(/Pyodide version: \d+\.\d+\.\d+/);
+    await expect(dialog).toContainText(/Python version: \d+\.\d+\.\d+/);
+    await expect(dialog).toContainText(
+      /Pygame Community Edition version: \d+\.\d+\.\d+/,
+    );
+
+    // Close modal
+    await dialog.getByRole("button", { name: "Close" }).click();
+
+    // Check no longer visible
+    await expect(dialog).toBeHidden();
+  });
+
   test("open GitHub", async () => {
     // Open project menu
     const menu = await project.openProjectMenu();
@@ -98,7 +122,7 @@ test.describe("project", () => {
     await expect(page).toHaveURL("/");
   });
 
-  test("open feedback", async () => {
+  test("open feedback form", async () => {
     // Open project menu
     const menu = await project.openProjectMenu();
 

@@ -244,7 +244,7 @@ export class Project extends TestHelper {
    * @returns A Locator for the project menu
    */
   public async openProjectMenu(): Promise<Locator> {
-    const projectButton = this.page.getByRole("button", { name: "Project" });
+    const projectButton = this.page.getByRole("button", { name: "Menu" });
     await projectButton.click();
 
     const projectMenu = this.page.getByRole("menu");
