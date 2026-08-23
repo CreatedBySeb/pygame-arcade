@@ -255,6 +255,14 @@ export class Project extends TestHelper {
 
 export class Runtime extends TestHelper {
   /**
+   * Assets the prompt to open a file is visible, which is displayed when the
+   * editor is closed/has no file focused
+   */
+  public async editorIsClosed(): Promise<void> {
+    await expect(this.page.getByText("No file open")).toBeVisible();
+  }
+
+  /**
    * Navigate to the editor and wait for it to load
    */
   public async loadEditor(): Promise<void> {

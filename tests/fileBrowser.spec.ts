@@ -132,6 +132,9 @@ test.describe("file browser", () => {
     // Check no longer visible
     await expect(file).toBeHidden();
 
+    // Check editor closed
+    await runtime.editorIsClosed();
+
     // Refresh file browser
     await fileBrowser.refresh();
 
@@ -172,6 +175,9 @@ test.describe("file browser", () => {
     // Check no longer visible
     await expect(folder).toBeHidden();
 
+    // Check editor closed
+    await runtime.editorIsClosed();
+
     // Refresh file browser
     await fileBrowser.refresh();
 
@@ -191,6 +197,9 @@ test.describe("file browser", () => {
 
     // Check no longer visible
     await expect(file).toBeHidden();
+
+    // Check editor closed
+    await runtime.editorIsClosed();
 
     // Refresh file browser
     await fileBrowser.refresh();

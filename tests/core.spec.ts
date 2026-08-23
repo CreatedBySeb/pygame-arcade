@@ -15,16 +15,23 @@ test("loads runtime", async ({ page }) => {
   const runtime = new Runtime(page);
   await page.goto("/");
 
-  // Expect the "Loading Python..." message and buttons to be disabled
-  await expect(page.getByText("Loading Python...")).toBeVisible();
+  const loadingPrompt = page.getByText("Loading Python...");
+  const buttons = await page.getByRole("button").all();
 
-  for (const button of await page.getByRole("button").all()) {
+  // Expect the "Loading Python..." message and buttons to be disabled
+  await expect(loadingPrompt).toBeVisible();
+  await runtime.editorIsClosed();
+
+  for (const button of buttons) {
     await expect(button).toBeDisabled();
   }
 
   await runtime.waitForLoad();
 
-  for (const button of await page.getByRole("button").all()) {
+  await expect(loadingPrompt).toBeHidden();
+  await expect(page.getByText("No file open")).toBeHidden();
+
+  for (const button of buttons) {
     await expect(button).toBeEnabled();
   }
 
