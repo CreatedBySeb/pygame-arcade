@@ -71,12 +71,22 @@ export interface RenameMessage {
 
 export interface RunMessage {
   _type: "run";
+  /** Shared audio buffers used for relaying audio */
+  audioBuffers: Float32Array[];
+  /** The `state` of the associated `AudioContext` */
+  audioState: AudioContextState;
+  /** The `baseLatency` of the associated `AudioContext` */
+  baseLatency: number;
   /** The bounding client rect of the canvas */
   boundingRect: DOMRect;
   /** The offscreen canvas controlling the HTML canvas */
   canvas: OffscreenCanvas;
+  /** The `sampleRate` of the associated `AudioContext` */
+  sampleRate: number;
   /** The size of the screen */
   screenSize: [number, number];
+  /** A shared buffer for signalling between audio and worker threads */
+  signalBuffer: Int32Array;
 }
 export interface SetInterruptMessage {
   _type: "setInterrupt";

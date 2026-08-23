@@ -94,6 +94,7 @@ test.describe("project", () => {
     // Stop the program
     await runtime.stop();
     await runtime.hasNoErrors();
+    await expect(runtime.outputPanel).not.toContainText("Warning, no sound");
 
     // Rerun the program
     await runtime.start();

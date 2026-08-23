@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",
+    "@types/audioworklet": "^0.0.100",
     "@types/emscripten": "^1.41.6",
     "@types/node": "^24.19.2",
     "@types/yauzl": "^3.4.0",
