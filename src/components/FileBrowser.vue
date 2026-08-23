@@ -3,7 +3,7 @@ import CreateFile from "@/components/dialogs/CreateFile.vue";
 import CreateFolder from "@/components/dialogs/CreateFolder.vue";
 import Rename from "@/components/dialogs/Rename.vue";
 import UploadFile from "@/components/dialogs/UploadFile.vue";
-import { closeEditor, editedPath, focusEditor } from "@/editors";
+import { closeEditor, editedPath, editors, focusEditor } from "@/editors";
 import {
   deletePath,
   fileSystem,
@@ -158,10 +158,22 @@ function onDeselect(node: TreeNode): void {
 }
 
 function invalidateExpansions(path: string): void {
+  // Deselect current path if affected
+  if (selectedPath.value?.startsWith(path)) {
+    selectedPath.value = undefined;
+  }
+
   // Remove any expanded keys under a path (e.g. for rename or delete)
   for (const key of Object.keys(expandedKeys.value)) {
     if (key.startsWith(path)) {
       delete expandedKeys.value[key];
+    }
+  }
+
+  // Close any affected editors
+  for (const key of Object.keys(editors)) {
+    if (key.startsWith(path)) {
+      closeEditor(key);
     }
   }
 }
