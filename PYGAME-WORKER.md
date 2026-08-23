@@ -49,22 +49,23 @@ The following methods/attributes need to be emulated for Pygame/SDL to work:
 - `canvas`
   - `addEventListener`
   - `getBoundingClientRect` (return value updated via event when resized)
-  - `id`
+  - `id` (always return `"canvas"`)
   - `style` (always empty object)
 - `body`
   - `requestPointerLock` (passed to main thread)
 - `document`
   - `addEventListener`
   - `body` (see above)
+  - `getElementById` (only works for canvas)
   - `fullscreenEnabled` (always `false`)
   - `fullscreenElement` (always `null`)
   - `hidden` (always `false`)
-  - `querySelector`
+  - `querySelector` (only works for canvas)
   - `visibilityState` (always `"visible"`)
   - `webkitFullscreenEnabled` (always `undefined`)
 - `screen`
-  - `height`
-  - `width`
+  - `height` (copied from main thread)
+  - `width`(copied from main thread)
 - `window`
   - `addEventListener`
 
@@ -112,3 +113,37 @@ properties. For `EventTarget` objects, we serialise only the `id` and `nodeName`
 that seem to be used. For any `TouchList` properties, these are instead sent as an `Array` of
 `TouchData` objects, which hold a complete set of properties from `Touch`, with special handling in
 the worker to replicate the `item` method of `TouchList` on the copied `Array`.
+
+## Audio
+
+Audio handling is a bit more complex, and is more closely tailored to the specific needs of Pygame
+than the more general event handling support that has been implemented. SDL will initialise an
+`AudioContext`, which is replaced with a stub that implements the necessary functionality from
+`AudioContext` and its superclass `BaseAudioContext`. SDL does not pass options to `AudioContext`,
+so they are discarded and a bare `AudioContext` is initialised when the project is run. The default
+parameters are then passed to the worker thread for use in the stub.
+
+### Implemented Stubs
+
+- `AudioBuffer`
+  - `numberOfChannels` (based on constructor)
+- `AudioContext` (inherits from `BaseAudioContext`)
+  - `(constructor)` (ignores options)
+  - `baseLatency` (copied from main thread)
+  - `close` (stubbed)
+  - `createScriptProcessor` (instantiates `ScriptProcessorNode` and saves arguments)
+  - `destination` (initialised to `AudioDestinationNode` on construction)
+  - `resume` (stubbed)
+- `AudioDestinationNode` (inherits from `AudioNode`)
+- `AudioNode`
+  - `connect` (stubbed, equivalent behaviour implemented on main thread)
+  - `disconnect` (stubbed)
+- `BaseAudioContext`
+  - `createBuffer` (stubbed)
+  - `sampleRate` (copied from main thread)
+  - `state` (copied from main thread)
+- `ScriptProcessorNode` (inherits from `AudioNode`)
+  - `bufferSize` (based on constructor)
+
+Some additional stubs are required if `BaseAudioContext#state` begins as `"suspended"`, but with the
+way `AudioContext` is initialised in the main thread, this should not occur.

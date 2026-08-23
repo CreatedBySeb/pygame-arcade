@@ -40,7 +40,7 @@ export function fakeCanvas(
     options?: EventListenerArgs,
   ) => {
     console.debug(
-      `Registered event handler for "${type}" on canvas (options: ${options})`,
+      `Registered event handler for "${type}" on canvas (options: ${JSON.stringify(options)})`,
     );
     listeners[type] = listeners[type] ?? [];
     listeners[type].push([listener, options]);
@@ -117,14 +117,13 @@ class EventTargetStub {
     this.listeners = listeners;
   }
 
-  // TODO: Need to investigate each event for handling
   public addEventListener(
     type: string,
     listener: Function,
     options?: EventListenerArgs,
   ) {
     console.debug(
-      `Registered event handler for "${type}" on ${this.constructor.name} (options: ${options})`,
+      `Registered event handler for "${type}" on ${this.constructor.name} (options: ${JSON.stringify(options)})`,
     );
 
     this.listeners[type] = this.listeners[type] ?? [];
@@ -145,6 +144,227 @@ class EventTargetStub {
         return func !== listener && opts !== options;
       });
     }
+  }
+}
+
+/**
+ * Stub for re-implementing `AudioProcessingEvent` functionality for Pygame/SDL
+ */
+class AudioProcessingEventStub {
+  public outputBuffer: AudioBufferStub;
+
+  constructor() {
+    this.outputBuffer = new AudioBufferStub(AudioContextStub.buffers, {
+      length: 1024,
+      numberOfChannels: AudioContextStub.buffers.length,
+      sampleRate: AudioContextStub.sampleRate,
+    });
+  }
+}
+
+/**
+ * Stub for re-implementing `AudioBuffer` functionality for Pygame/SDL
+ */
+class AudioBufferStub {
+  public numberOfChannels: number;
+
+  protected buffers: Float32Array[];
+  protected options: AudioBufferOptions;
+
+  constructor(buffers: Float32Array[], options: AudioBufferOptions) {
+    this.buffers = buffers;
+    this.options = options;
+
+    this.numberOfChannels = options.numberOfChannels ?? 1;
+
+    if (this.numberOfChannels !== this.buffers.length) {
+      console.error(
+        `Mismatch in AudioBuffer: ${buffers.length} buffer(s) but numberOfChannels=${this.numberOfChannels}`,
+      );
+    }
+  }
+
+  public getChannelData(channel: number): Float32Array {
+    return this.buffers[channel];
+  }
+}
+
+/**
+ * Stub for re-implementing `AudioNodeStub` functionality for Pygame/SDL
+ */
+class AudioNodeStub {
+  public connect(
+    destination: unknown,
+    outputIndex: number = 0,
+    inputIndex: number = 0,
+  ): AudioNodeStub | undefined {
+    const dest =
+      typeof destination === "object"
+        ? destination?.constructor.name
+        : undefined;
+
+    console.debug(
+      `Stubbed call connect(${dest}, ${outputIndex}, ${inputIndex})`,
+    );
+
+    if (destination instanceof AudioNodeStub) {
+      return destination;
+    }
+  }
+
+  public disconnect(
+    destination?: unknown,
+    output?: number,
+    input?: number,
+  ): void {
+    const dest =
+      typeof destination === "object"
+        ? destination?.constructor.name
+        : undefined;
+
+    console.debug(`Stubbed call disconnect(${dest}, ${output}, ${input})`);
+  }
+}
+
+/**
+ * Stub for re-implementing `AudioDestinationNodeStub` functionality for Pygame/SDL
+ */
+class AudioDestinationNodeStub extends AudioNodeStub {}
+
+/**
+ * Stub for re-implementing `ScriptProcessorNodeStub` functionality for Pygame/SDL
+ */
+class ScriptProcessorNodeStub extends AudioNodeStub {
+  public bufferSize: number;
+  public onaudioprocess: Function | undefined;
+
+  protected inChannels: number;
+  protected outChannels: number;
+
+  constructor(bufferSize: number, inChannels: number, outChannels: number) {
+    super();
+    this.bufferSize = bufferSize;
+    this.inChannels = inChannels;
+    this.outChannels = outChannels;
+
+    this.waitSignal();
+  }
+
+  protected fakeEvent() {
+    // console.log("Worker thread woken");
+
+    if (this.onaudioprocess) {
+      this.onaudioprocess(proxyInDev(new AudioProcessingEventStub()));
+    }
+
+    this.waitSignal();
+    // console.log("Worker thread notifying AudioWorklet");
+    Atomics.notify(AudioContextStub.signalBuffer, 1);
+  }
+
+  protected waitSignal() {
+    const { value } = Atomics.waitAsync(AudioContextStub.signalBuffer, 0, 0);
+    // FIXME: we're assuming we always get the promise we expect, need to fix
+
+    if (value instanceof Promise) {
+      value.then(() => this.fakeEvent());
+    }
+  }
+}
+
+/**
+ * Stub for re-implementing `AudioContext` functionality for Pygame/SDL
+ */
+export class AudioContextStub extends EventTargetStub {
+  public static baseLatency: number;
+  public static buffers: Float32Array[];
+  public static listeners: EventListeners;
+  public static sampleRate: number;
+  public static signalBuffer: Int32Array;
+  public static state: AudioContextState;
+
+  public baseLatency: number;
+  public destination: AudioDestinationNodeStub;
+  public sampleRate: number;
+  public state: AudioContextState;
+
+  protected options?: AudioContextOptions;
+
+  constructor(options?: AudioContextOptions) {
+    const requiredStatics: unknown[] = [
+      AudioContextStub.baseLatency,
+      AudioContextStub.buffers,
+      AudioContextStub.listeners,
+      AudioContextStub.sampleRate,
+      AudioContextStub.state,
+    ];
+
+    if (requiredStatics.includes(undefined)) {
+      throw new Error(
+        "AudioContextStub instantiated but some static properties are unset",
+      );
+    }
+
+    console.debug(
+      "Initialised AudioContextStub with options: " + JSON.stringify(options),
+    );
+
+    super(AudioContextStub.listeners);
+
+    this.baseLatency = AudioContextStub.baseLatency;
+    this.sampleRate = AudioContextStub.sampleRate;
+    this.state = AudioContextStub.state;
+
+    this.options = options;
+
+    this.destination = proxyInDev(new AudioDestinationNodeStub());
+
+    return proxyInDev(this);
+  }
+
+  public async close(): Promise<void> {
+    console.debug("Stubbed call close()");
+  }
+
+  // FIXME: used for silence buffer, does that have implications on complexity required?
+  public createBuffer(
+    numOfChannels: number,
+    length: number,
+    sampleRate: number,
+  ): AudioBufferStub {
+    console.debug(
+      `Stubbed call createBuffer(${numOfChannels}, ${length}, ${sampleRate})`,
+    );
+    return proxyInDev(
+      new AudioBufferStub(AudioContextStub.buffers, {
+        length,
+        numberOfChannels: numOfChannels,
+        sampleRate,
+      }),
+    );
+  }
+
+  public createScriptProcessor(
+    bufferSize: number,
+    numberOfInputChannels: number,
+    numberOfOutputChannels: number,
+  ) {
+    console.debug(
+      `Stubbed call createScriptProcessor(${bufferSize}, ${numberOfInputChannels}, ${numberOfOutputChannels})`,
+    );
+
+    return proxyInDev(
+      new ScriptProcessorNodeStub(
+        bufferSize,
+        numberOfInputChannels,
+        numberOfOutputChannels,
+      ),
+    );
+  }
+
+  public resume(): Promise<void> {
+    console.debug("Stubbed call resume");
+    return Promise.resolve();
   }
 }
 
@@ -178,6 +398,18 @@ export class DocumentStub extends EventTargetStub {
     super(listeners);
     this.canvasGetter = canvasGetter;
     this.body = proxyInDev(new BodyStub());
+  }
+
+  public getElementById(id: string): unknown {
+    if (id === "canvas") {
+      return this.canvasGetter();
+    }
+
+    // Pyodide shouldn't need any elements other than the canvas, but log any
+    // others so we can figure out how to handle them
+    console.error(
+      `Received unexpected queryElementById call for "${id}" in worker`,
+    );
   }
 
   public querySelector(selector: string): unknown {

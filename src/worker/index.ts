@@ -14,6 +14,7 @@ import {
   type OutgoingWorkerMessage,
 } from "@/worker/api";
 import {
+  AudioContextStub,
   DocumentStub,
   fakeCanvas,
   fakeEvent,
@@ -39,10 +40,12 @@ const decoder: TextDecoder = new TextDecoder();
 // See PYGAME-WORKER.md
 let eventListeners: EventListeners = {};
 
+AudioContextStub.listeners = eventListeners;
 const document = proxyInDev(new DocumentStub(eventListeners, () => canvas));
 const screen = proxyInDev(new ScreenStub());
 const window = proxyInDev(new WindowStub(eventListeners));
 
+(globalThis.AudioContext as any) = AudioContextStub;
 (globalThis.document as any) = document;
 (globalThis.screen as any) = screen;
 (globalThis.window as any) = window;
@@ -300,7 +303,19 @@ self.onmessage = async (event): Promise<void> => {
 
       if (listeners.length) {
         const event = fakeEvent(message.event);
-        listeners.forEach(([listener]) => listener(event));
+
+        // Remove any listeners that were registered with `once` after execution
+        eventListeners[message.event.type] = listeners.filter(
+          ([listener, options]) => {
+            listener(event);
+
+            if (typeof options === "object" && options.once) {
+              return false;
+            }
+
+            return true;
+          },
+        );
       }
 
       break;
@@ -325,6 +340,13 @@ self.onmessage = async (event): Promise<void> => {
     }
 
     case "run": {
+      // Set up `AudioContextStub` based on main thread values
+      AudioContextStub.baseLatency = message.baseLatency;
+      AudioContextStub.buffers = message.audioBuffers;
+      AudioContextStub.sampleRate = message.sampleRate;
+      AudioContextStub.signalBuffer = message.signalBuffer;
+      AudioContextStub.state = message.audioState; // FIXME: Make dynamic so it updates
+
       // FIXME: Handle indirectly started tasks?
       pyodide.runPython(invalidateImports);
       let maybeCoroutine: PyProxy;
