@@ -62,6 +62,7 @@ const canvasObserver = new ResizeObserver(([entry]) => {
 
 const interruptBuf = new Uint8Array(new SharedArrayBuffer(1));
 const pendingReads: Record<string, PromiseFunctions<string>> = {};
+const stoppedPromises: (() => void)[] = [];
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const fileStructureRef = ref<DirectoryContents>({});
@@ -151,6 +152,12 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
 
       stderrRef.value += message.error;
 
+      if (stoppedPromises.length) {
+        stoppedPromises
+          .splice(0, stoppedPromises.length)
+          .forEach((resolve) => resolve());
+      }
+
       break;
     }
 
@@ -181,6 +188,12 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
 
       if (taskRunningRef.value) {
         taskRunningRef.value = false;
+      }
+
+      if (stoppedPromises.length) {
+        stoppedPromises
+          .splice(0, stoppedPromises.length)
+          .forEach((resolve) => resolve());
       }
 
       break;
@@ -315,6 +328,7 @@ export async function interrupt(): Promise<void> {
     // Task cancellation is cleanest option
     postMessage({ _type: "stop" });
     taskRunningRef.value = false;
+    await new Promise<void>((resolve) => stoppedPromises.push(resolve));
   } else {
     // Fall back to interrupt
     interruptBuf[0] = INTERRUPT_SET;
