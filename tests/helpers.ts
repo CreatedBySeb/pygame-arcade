@@ -255,11 +255,33 @@ export class Project extends TestHelper {
 
 export class Runtime extends TestHelper {
   /**
+   * Closes the 'fullscreen' window
+   */
+  public async closeFullscreen(): Promise<void> {
+    const closeButton = this.page.getByRole("button", {
+      name: "Close Fullscreen",
+    });
+
+    await closeButton.click();
+    await expect(closeButton).toBeHidden();
+  }
+
+  /**
    * Assets the prompt to open a file is visible, which is displayed when the
    * editor is closed/has no file focused
    */
   public async editorIsClosed(): Promise<void> {
     await expect(this.page.getByText("No file open")).toBeVisible();
+  }
+
+  /**
+   * Displays the window in 'fullscreen' (maximised within the window)
+   */
+  public async fullscreen(): Promise<void> {
+    await this.page.getByRole("button", { name: "Fullscreen" }).click();
+    await expect(
+      this.page.getByRole("button", { name: "Close Fullscreen" }),
+    ).toBeVisible();
   }
 
   /**
@@ -281,9 +303,9 @@ export class Runtime extends TestHelper {
   /**
    * Press the stop button
    */
-  public async stop(): Promise<void> {
+  public async stop(...clickArgs: Parameters<Locator["click"]>): Promise<void> {
     const button = this.page.getByRole("button", { name: "Stop" });
-    await button.click();
+    await button.click(...clickArgs);
   }
 
   /**

@@ -81,6 +81,30 @@ test.describe("core", () => {
     await expect(outputPanel).toContainText(/^$/);
   });
 
+  test("open and close fullscreen", async () => {
+    // Toggle fullscreen
+    await runtime.fullscreen();
+
+    // Verify canvas is fully visible
+    await expect(page.locator("canvas")).toBeInViewport({ ratio: 1 });
+
+    // Verify unable to click the stop button
+    let failed: boolean = false;
+    try {
+      await runtime.stop({ timeout: 1000 });
+    } catch (e) {
+      failed = true;
+    }
+
+    expect(failed, "Expect stop button not to be clickable").toBeTruthy();
+
+    // Close fullscreen
+    await runtime.closeFullscreen();
+
+    // Verify able to click the stop button
+    await runtime.stop();
+  });
+
   test("edits affect execution", async () => {
     // Edit the file
     const editor = page.getByRole("textbox");

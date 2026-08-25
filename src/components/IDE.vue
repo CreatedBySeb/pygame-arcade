@@ -24,6 +24,7 @@ import { ref, useTemplateRef, type Ref } from "vue";
 
 const confirm = useConfirm();
 const aboutVisible = ref(false);
+const fullscreen = ref(false);
 const importVisible = ref(false);
 
 function confirmErase() {
@@ -146,6 +147,13 @@ const menuItems: Ref<MenuItem[]> = ref([
           <Button
             severity="secondary"
             :disabled="!pyodideLoaded"
+            icon="pi pi-window-maximize"
+            label="Fullscreen"
+            @click="() => (fullscreen = true)"
+          />
+          <Button
+            severity="secondary"
+            :disabled="!pyodideLoaded"
             icon="pi pi-chevron-down"
             icon-pos="right"
             label="Menu"
@@ -160,7 +168,7 @@ const menuItems: Ref<MenuItem[]> = ref([
             :model="menuItems"
           />
         </div>
-        <Window></Window>
+        <Window v-model:fullscreen="fullscreen" />
         <Message v-show="!pyodideLoaded" severity="secondary">
           Loading Python...
         </Message>
@@ -178,6 +186,7 @@ const menuItems: Ref<MenuItem[]> = ref([
   width: 100%;
 
   & #control-buttons {
+    flex-wrap: wrap;
     padding: 0.5rem;
   }
 

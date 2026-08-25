@@ -41,7 +41,7 @@ form {
 
 .spaced-buttons {
   display: flex;
-  gap: 1rem;
+  gap: .5rem;
   justify-content: center;
 }
 
