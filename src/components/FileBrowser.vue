@@ -295,7 +295,7 @@ function refresh() {
         />
       </ButtonGroup>
     </div>
-    <div class="tree-scroller" @click="emptyClick">
+    <div class="tree-scroller" data-testid="tree-scroller" @click="emptyClick">
       <Tree
         :loading="loading"
         v-model:expanded-keys="expandedKeys"

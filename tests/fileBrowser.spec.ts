@@ -18,6 +18,11 @@ test.describe("file browser", () => {
     await runtime.loadEditor();
   });
 
+  test.beforeEach(async () => {
+    // Ensure nothing is selected before each test for consistency
+    await fileBrowser.deselect();
+  });
+
   test("upload single", async () => {
     // Upload file
     await fileBrowser.uploadFiles(`${import.meta.dirname}/resources/empty.txt`);
@@ -343,11 +348,7 @@ test.describe("file browser", () => {
     await expect(file).toBeChecked();
 
     // Click empty space
-    const tree = page.getByRole("tree");
-    const boundingBox = await tree.boundingBox();
-    expect(boundingBox).not.toBeNull();
-    const { height, x, y } = boundingBox!;
-    await page.click("body", { position: { x: x + 10, y: y + height + 10 } });
+    await fileBrowser.deselect();
 
     // Verify deselected
     await expect(file).not.toBeChecked();

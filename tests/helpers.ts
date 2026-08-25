@@ -99,6 +99,17 @@ export class FileBrowser extends TestHelper {
     await expect(modal).toBeHidden();
   }
 
+  public async deselect(): Promise<void> {
+    // Get tree scroll container
+    const container = this.page.getByTestId("tree-scroller");
+    const boundingBox = await container.boundingBox();
+    expect(boundingBox).not.toBeNull();
+
+    // Click below the tree
+    const { height } = boundingBox!;
+    await container.click({ position: { x: 10, y: height - 10 } });
+  }
+
   /**
    * Gets a tree item with the provided name, optionally within another item
    * @param name The name of the tree item
