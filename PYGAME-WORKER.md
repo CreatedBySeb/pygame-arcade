@@ -61,6 +61,7 @@ The following methods/attributes need to be emulated for Pygame/SDL to work:
   - `fullscreenElement` (always `null`)
   - `hidden` (always `false`)
   - `querySelector` (only works for canvas)
+  - `removeEventListener`
   - `visibilityState` (always `"visible"`)
   - `webkitFullscreenEnabled` (always `undefined`)
 - `screen`
@@ -68,6 +69,7 @@ The following methods/attributes need to be emulated for Pygame/SDL to work:
   - `width`(copied from main thread)
 - `window`
   - `addEventListener`
+  - `removeEventListener`
 
 ## Handled Events
 
@@ -139,7 +141,9 @@ parameters are then passed to the worker thread for use in the stub.
   - `connect` (stubbed, equivalent behaviour implemented on main thread)
   - `disconnect` (stubbed)
 - `BaseAudioContext`
+  - `addEventListener`
   - `createBuffer` (stubbed)
+  - `removeEventListener`
   - `sampleRate` (copied from main thread)
   - `state` (copied from main thread)
 - `ScriptProcessorNode` (inherits from `AudioNode`)

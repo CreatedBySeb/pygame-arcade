@@ -7,21 +7,60 @@ class ProxyProcessor
   extends AudioWorkletProcessor
   implements AudioWorkletProcessorImpl
 {
-  protected dataBuffers: Float32Array[] = [];
+  protected audioBuffers: Float32Array[] = [];
+  protected bufferSize: number = 0;
+  protected firstRun: boolean = true;
   protected readOffset: number = 0;
   protected ready: boolean = false;
+  protected sharedBuffers: Float32Array[] = [];
   protected signalBuffer: Int32Array = new Int32Array(2);
 
   constructor() {
     super();
 
     this.port.onmessage = (event) => {
-      // FIXME: Assuming we get a good payload
-      this.dataBuffers = event.data.audioBuffers;
-      this.signalBuffer = event.data.signalBuffer;
-      this.ready = true;
+      const { audioBuffers, signalBuffer } = event.data as {
+        audioBuffers: Float32Array[];
+        signalBuffer: Int32Array;
+      };
 
-      console.debug("AudioWorklet is set up with buffers");
+      const bufSizes = audioBuffers.map((buf) => buf.length);
+      if (new Set(bufSizes).size > 1) {
+        console.error(
+          "ProxyProcessor got shared buffers of different sizes, audio will not play",
+        );
+        return;
+      }
+
+      if (!audioBuffers.every((buf) => buf instanceof Float32Array)) {
+        console.error(
+          "ProxyProcessor got shared buffers which were not Float32Array, audio will not play",
+        );
+        return;
+      }
+
+      if (!(signalBuffer instanceof Int32Array)) {
+        console.error(
+          "ProxyProcessor got signal buffer which was not Int32Array, audio will not play",
+        );
+        return;
+      }
+
+      // Save the buffers and shared buffer size
+      this.bufferSize = bufSizes[0];
+      this.sharedBuffers = audioBuffers;
+      this.signalBuffer = signalBuffer;
+
+      // Initialise copies to be all 0
+      this.audioBuffers = audioBuffers.map(
+        (buf) => new Float32Array(buf.length),
+      );
+
+      console.debug(
+        `ProxyProcessor set up with buffers (size: ${this.bufferSize})`,
+      );
+
+      this.ready = true;
     };
   }
 
@@ -34,36 +73,45 @@ class ProxyProcessor
       return true;
     }
 
-    // TODO: Investigate pre-buffering; if we request the data 1-2 samples early, then only wait
-    // when we need it, hopefully it may already be there and we can continue seamlessly?
-    // Only request data from worker when we are starting a cycle
-    if (this.readOffset === 0) {
-      // console.debug("AudioWorklet notifying worker");
+    if (this.firstRun) {
+      // Always signal for new audio on first run
+      this.firstRun = false;
       Atomics.notify(this.signalBuffer, 0);
-      Atomics.wait(this.signalBuffer, 1, 0, 0.5); // FIXME: find the correct timeout, probably shorter than this?
-      // console.debug("AudioWorklet woken");
     }
 
-    /* console.debug(
-      `Output sizes: ` +
-        outputs
-          .map((bufs) => bufs.map((buf) => buf.length).join(","))
-          .join(";"),
-    ); */
+    if (this.readOffset === 0) {
+      // Only request data from worker when we are starting a cycle
+      Atomics.wait(this.signalBuffer, 1, 0, 0.5); // FIXME: find the correct timeout, probably shorter than this?
 
+      // Copy the data out of the shared buffers
+      this.sharedBuffers.forEach((buf, i) => {
+        for (let index = 0; index < buf.length; index++) {
+          this.audioBuffers[i][index] = buf[index];
+        }
+      });
+    }
+
+    // FIXME: This assumes each output array only has one value, unsure if this
+    // is guaranteed
     outputs.forEach(([output], i) => {
-      const input = this.dataBuffers[i];
+      const input = this.audioBuffers[i];
 
       for (let index = 0; index < output.length; index++) {
         output[index] = input[index + this.readOffset];
       }
     });
 
-    this.readOffset += 128; // FIXME: don't hard code this
+    // FIXME: Assuming each output has the same length
+    const sampleLength = outputs[0][0].length;
+    this.readOffset += sampleLength;
 
-    // Reset once we've used the full buffer
-    if (this.readOffset === 1024) {
+    // FIXME: how to handle if they don't divide evenly? is that realistic with powers of 2?
+    if (this.readOffset >= this.bufferSize) {
+      // Reset offset we've used the full buffer
       this.readOffset = 0;
+    } else if (this.readOffset >= this.bufferSize - 2 * sampleLength) {
+      // Signal for new audio 2 samples before we run out
+      Atomics.notify(this.signalBuffer, 0);
     }
 
     return true;
