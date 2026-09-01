@@ -71,8 +71,6 @@ export interface RenameMessage {
 
 export interface RunMessage {
   _type: "run";
-  /** Shared audio buffers used for relaying audio */
-  audioBuffers: Float32Array[];
   /** The `state` of the associated `AudioContext` */
   audioState: AudioContextState;
   /** The `baseLatency` of the associated `AudioContext` */
@@ -175,6 +173,12 @@ export interface RequestPointerLockMessage {
   options: PointerLockOptions;
 }
 
+export interface StartAudioMessage {
+  _type: "startAudio";
+  /** The audio data buffers to use */
+  buffers: Float32Array[];
+}
+
 export interface StderrMessage {
   _type: "stderr";
   /** The UTF-8 decoded text from the stderr */
@@ -199,6 +203,7 @@ export type OutgoingWorkerMessage =
   | FinishedMessage
   | ReadyMessage
   | RequestPointerLockMessage
+  | StartAudioMessage
   | StderrMessage
   | StdoutMessage
   | TaskStartedMessage;

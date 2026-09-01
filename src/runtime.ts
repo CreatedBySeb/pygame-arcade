@@ -61,11 +61,6 @@ const canvasObserver = new ResizeObserver(([entry]) => {
   });
 });
 
-//FIXME: may also need to zero these out
-const audioBuffers = [
-  new Float32Array(new SharedArrayBuffer(4096)),
-  new Float32Array(new SharedArrayBuffer(4096)),
-]; // FIXME: figure out how to set correct number and channels? (see SDL2 SDL_emscriptenaudio.c)
 let audioContext: AudioContext | null = null;
 const audioSignalBuffer = new Int32Array(new SharedArrayBuffer(8));
 const interruptBuf = new Uint8Array(new SharedArrayBuffer(1));
@@ -222,6 +217,11 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
 
     case "requestPointerLock": {
       document.body.requestPointerLock(message.options);
+      break;
+    }
+
+    case "startAudio": {
+      await setupAudio(message.buffers);
       break;
     }
 
@@ -421,16 +421,20 @@ export function setCanvas(canvas: HTMLCanvasElement): void {
  * Request the Pyodide worker to execute the currently written program
  */
 export async function runProgram(): Promise<void> {
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+  }
+
   await interrupt();
   clearOutput();
   interruptBuf[0] = INTERRUPT_CLEAR;
   startedRef.value = true;
 
-  audioContext = await setupAudio();
+  audioContext = new AudioContext();
 
   postMessage({
     _type: "run",
-    audioBuffers,
     audioState: audioContext.state,
     baseLatency: audioContext.baseLatency,
     sampleRate: audioContext.sampleRate,
@@ -493,36 +497,25 @@ function resetProject() {
 /**
  * An `AudioContext` instance configured for Pygame
  */
-async function setupAudio(): Promise<AudioContext> {
-  if (audioContext) {
-    audioContext.close();
-    audioContext = null;
+async function setupAudio(buffers: Float32Array[]): Promise<void> {
+  if (!audioContext) {
+    console.error("Tried to setup audio but AudioContext is not initialised!");
+    return;
   }
 
-  const ctx = new AudioContext();
-  await ctx.audioWorklet.addModule(audioWorklet);
+  await audioContext.audioWorklet.addModule(audioWorklet);
 
-  // FIXME: Better way to determine the values, hardcoding won't work all the time
-  const proxyNode = new AudioWorkletNode(ctx, "proxy-processor", {
+  const proxyNode = new AudioWorkletNode(audioContext, "proxy-processor", {
     numberOfInputs: 0,
-    numberOfOutputs: 2,
+    numberOfOutputs: buffers.length,
   });
+
   proxyNode.port.postMessage({
-    audioBuffers,
+    audioBuffers: buffers,
     signalBuffer: audioSignalBuffer,
   });
-  proxyNode.connect(ctx.destination);
 
-  // FIXME: Better way to determine the values, hardcoding won't work all the time
-  // const processor = ctx.createScriptProcessor(1024, 0, 2);
-  // FIXME: Uncomment once ready to start testing actual audio, needs event type handling still
-  // processor.addEventListener("audioprocess", (event) => relayEvent(event));
-  /* processor.addEventListener("audioprocess", (event) => {
-    debugger;
-  }); */
-  // processor.connect(ctx.destination);
-
-  return ctx;
+  proxyNode.connect(audioContext.destination);
 }
 
 /**
