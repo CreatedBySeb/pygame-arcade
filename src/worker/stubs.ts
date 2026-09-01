@@ -5,6 +5,7 @@
  */
 
 import { proxyInDev } from "@/debug";
+import type { OutgoingWorkerMessage } from "@/worker/api";
 import type { SomeEventData, TouchData } from "@/worker/events";
 
 /** The possible third arguments for an `addEventListener` call */
@@ -155,10 +156,10 @@ class EventTargetStub {
 class AudioProcessingEventStub {
   public outputBuffer: AudioBufferStub;
 
-  constructor() {
-    this.outputBuffer = new AudioBufferStub(AudioContextStub.buffers, {
-      length: 1024,
-      numberOfChannels: AudioContextStub.buffers.length,
+  constructor(buffers: Float32Array[]) {
+    this.outputBuffer = new AudioBufferStub(buffers, {
+      length: buffers[0].length,
+      numberOfChannels: buffers.length,
       sampleRate: AudioContextStub.sampleRate,
     });
   }
@@ -240,11 +241,18 @@ class ScriptProcessorNodeStub extends AudioNodeStub {
   public bufferSize: number;
   public onaudioprocess: Function | undefined;
 
+  protected buffers: Float32Array[];
   protected inChannels: number;
   protected outChannels: number;
 
-  constructor(bufferSize: number, inChannels: number, outChannels: number) {
+  constructor(
+    buffers: Float32Array[],
+    bufferSize: number,
+    inChannels: number,
+    outChannels: number,
+  ) {
     super();
+    this.buffers = buffers;
     this.bufferSize = bufferSize;
     this.inChannels = inChannels;
     this.outChannels = outChannels;
@@ -253,14 +261,13 @@ class ScriptProcessorNodeStub extends AudioNodeStub {
   }
 
   protected fakeEvent() {
-    // console.log("Worker thread woken");
-
     if (this.onaudioprocess) {
-      this.onaudioprocess(proxyInDev(new AudioProcessingEventStub()));
+      this.onaudioprocess(
+        proxyInDev(new AudioProcessingEventStub(this.buffers)),
+      );
     }
 
     this.waitSignal();
-    // console.log("Worker thread notifying AudioWorklet");
     Atomics.notify(AudioContextStub.signalBuffer, 1);
   }
 
@@ -279,7 +286,6 @@ class ScriptProcessorNodeStub extends AudioNodeStub {
  */
 export class AudioContextStub extends EventTargetStub {
   public static baseLatency: number;
-  public static buffers: Float32Array[];
   public static listeners: EventListeners;
   public static sampleRate: number;
   public static signalBuffer: Int32Array;
@@ -295,7 +301,6 @@ export class AudioContextStub extends EventTargetStub {
   constructor(options?: AudioContextOptions) {
     const requiredStatics: unknown[] = [
       AudioContextStub.baseLatency,
-      AudioContextStub.buffers,
       AudioContextStub.listeners,
       AudioContextStub.sampleRate,
       AudioContextStub.state,
@@ -337,8 +342,9 @@ export class AudioContextStub extends EventTargetStub {
     console.debug(
       `Stubbed call createBuffer(${numOfChannels}, ${length}, ${sampleRate})`,
     );
+
     return proxyInDev(
-      new AudioBufferStub(AudioContextStub.buffers, {
+      new AudioBufferStub(this.initialiseBuffers(numOfChannels, length), {
         length,
         numberOfChannels: numOfChannels,
         sampleRate,
@@ -355,8 +361,16 @@ export class AudioContextStub extends EventTargetStub {
       `Stubbed call createScriptProcessor(${bufferSize}, ${numberOfInputChannels}, ${numberOfOutputChannels})`,
     );
 
+    const buffers = this.initialiseBuffers(numberOfOutputChannels, bufferSize);
+
+    postMessage({
+      _type: "startAudio",
+      buffers,
+    } satisfies OutgoingWorkerMessage);
+
     return proxyInDev(
       new ScriptProcessorNodeStub(
+        buffers,
         bufferSize,
         numberOfInputChannels,
         numberOfOutputChannels,
@@ -367,6 +381,16 @@ export class AudioContextStub extends EventTargetStub {
   public resume(): Promise<void> {
     console.debug("Stubbed call resume");
     return Promise.resolve();
+  }
+
+  protected initialiseBuffers(count: number, size: number): Float32Array[] {
+    const buffers: Float32Array[] = [];
+
+    for (let i = 0; i < count; i++) {
+      buffers[i] = new Float32Array(new SharedArrayBuffer(size * 4));
+    }
+
+    return buffers;
   }
 }
 

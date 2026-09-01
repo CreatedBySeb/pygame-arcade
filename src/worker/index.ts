@@ -395,7 +395,6 @@ self.onmessage = async (event): Promise<void> => {
 
       // Set up `AudioContextStub` based on main thread values
       AudioContextStub.baseLatency = message.baseLatency;
-      AudioContextStub.buffers = message.audioBuffers;
       AudioContextStub.sampleRate = message.sampleRate;
       AudioContextStub.signalBuffer = message.signalBuffer;
       AudioContextStub.state = message.audioState; // FIXME: Make dynamic so it updates
