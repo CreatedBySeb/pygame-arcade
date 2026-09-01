@@ -82,7 +82,7 @@ export function fakeEvent(data: SomeEventData): Event {
 
   data = {
     ...data,
-    target: data.target && proxyInDev(data.target),
+    target: data.target && proxyInDev(data.target, "EventTargetData"),
   };
 
   const modified = data as Event;
@@ -90,7 +90,7 @@ export function fakeEvent(data: SomeEventData): Event {
   modified.preventDefault = () =>
     console.debug("Prevent default called on " + data.type);
 
-  return proxyInDev(modified);
+  return proxyInDev(modified, `FakeEvent(${data?.type})`);
 }
 
 /**
