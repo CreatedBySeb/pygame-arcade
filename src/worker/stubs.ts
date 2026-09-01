@@ -7,8 +7,10 @@
 import { proxyInDev } from "@/debug";
 import type { SomeEventData, TouchData } from "@/worker/events";
 
+/** The possible third arguments for an `addEventListener` call */
+type EventListenerArgs = AddEventListenerOptions | boolean | undefined;
 /** A mapping of event types to listeners */
-export type EventListeners = Record<string, Function[]>;
+export type EventListeners = Record<string, [Function, EventListenerArgs][]>;
 /** An `OffscreenCanvas` modified to act like an `HTMLCanvasElement` */
 export type FakeCanvas = OffscreenCanvas &
   HTMLCanvasElement & { _boundingRect: DOMRect };
@@ -35,13 +37,13 @@ export function fakeCanvas(
   modified.addEventListener = (
     type: string,
     listener: Function,
-    options?: unknown,
+    options?: EventListenerArgs,
   ) => {
     console.debug(
       `Registered event handler for "${type}" on canvas (options: ${options})`,
     );
     listeners[type] = listeners[type] ?? [];
-    listeners[type].push(listener);
+    listeners[type].push([listener, options]);
   };
 
   modified.getBoundingClientRect = () => modified._boundingRect;
@@ -116,13 +118,33 @@ class EventTargetStub {
   }
 
   // TODO: Need to investigate each event for handling
-  public addEventListener(type: string, listener: Function, options?: unknown) {
+  public addEventListener(
+    type: string,
+    listener: Function,
+    options?: EventListenerArgs,
+  ) {
     console.debug(
       `Registered event handler for "${type}" on ${this.constructor.name} (options: ${options})`,
     );
 
     this.listeners[type] = this.listeners[type] ?? [];
-    this.listeners[type].push(listener);
+    this.listeners[type].push([listener, options]);
+  }
+
+  public removeEventListener(
+    type: string,
+    listener: Function,
+    options?: EventListenerArgs,
+  ) {
+    console.debug(
+      `Removed event handler for "${type}" on ${this.constructor.name} (options: ${JSON.stringify(options)})`,
+    );
+
+    if (this.listeners[type]) {
+      this.listeners[type] = this.listeners[type].filter(([func, opts]) => {
+        return func !== listener && opts !== options;
+      });
+    }
   }
 }
 

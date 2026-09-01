@@ -21,3 +21,11 @@ for mod in user_mods:
     del sys.modules[mod]
 
 importlib.invalidate_caches()
+
+pygame_loaded = any("pygame" in mod for mod in sys.modules)
+
+if pygame_loaded:
+    import pygame
+
+    if pygame.get_init():
+        pygame.quit()

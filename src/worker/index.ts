@@ -300,7 +300,7 @@ self.onmessage = async (event): Promise<void> => {
 
       if (listeners.length) {
         const event = fakeEvent(message.event);
-        listeners.forEach((listener) => listener(event));
+        listeners.forEach(([listener]) => listener(event));
       }
 
       break;
