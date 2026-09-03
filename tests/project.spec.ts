@@ -64,6 +64,34 @@ test.describe("project", () => {
     );
   });
 
+  test("load aliens example", async () => {
+    const projectMenu = await project.openProjectMenu();
+
+    // Click the example item
+    await projectMenu
+      .getByRole("menuitem", { name: "Load Aliens Example" })
+      .click();
+
+    // Confirm the choice
+    const modal = page
+      .getByRole("alertdialog")
+      .filter({ hasText: "Load Aliens Example" });
+
+    await expect(modal).toBeVisible();
+    await modal.getByRole("button", { name: "Confirm" }).click();
+    await expect(modal).toBeHidden();
+
+    // Check the editor text
+    const editor = page.getByRole("textbox");
+    await expect(editor).toContainText("pygame.examples.aliens");
+
+    // Run the program
+    await runtime.start();
+
+    // Wait a second to see if we get errors
+    await page.waitForTimeout(1000);
+  });
+
   test("reset project", async () => {
     // Setup some changes
     const editor = page.getByRole("textbox");

@@ -9,10 +9,12 @@ import { closeAllEditors } from "@/editors";
 import {
   downloadProject,
   eraseProject,
+  importProject,
   interrupt,
   pyodideLoaded,
   runProgram,
 } from "@/runtime.ts";
+import aliensExampleUrl from "@/aliens-example.zip?url";
 import Button from "primevue/button";
 import Menu from "primevue/menu";
 import type { MenuItem } from "primevue/menuitem";
@@ -49,6 +51,31 @@ function confirmErase() {
   });
 }
 
+async function loadAliens() {
+  const response = await fetch(aliensExampleUrl);
+  const zipFile = new File([await response.blob()], "aliens-example.zip");
+
+  confirm.require({
+    accept: () => {
+      closeAllEditors();
+      importProject(zipFile);
+    },
+    acceptProps: {
+      label: "Confirm",
+      severity: "danger",
+    },
+    blockScroll: true,
+    header: "Load Aliens Example",
+    icon: "pi pi-exclamation-triangle",
+    message:
+      "Are you sure you want to replace all files and data in your project with the Aliens Example?",
+    rejectProps: {
+      label: "Cancel",
+      severity: "secondary",
+    },
+  });
+}
+
 function run() {
   // Blur the currently focused element, which should be the run button, to
   // avoid accidentally retriggering it
@@ -75,6 +102,11 @@ const menuItems: Ref<MenuItem[]> = ref([
         label: "Import from Zip",
         icon: "pi pi-upload",
         command: () => (importVisible.value = true),
+      },
+      {
+        label: "Load Aliens Example",
+        icon: "pi pi-lightbulb",
+        command: loadAliens,
       },
       {
         label: "Erase all Files",
