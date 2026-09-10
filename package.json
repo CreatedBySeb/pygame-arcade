@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "format": "prettier --write src/**/*.{css,ts,vue}",
+    "format:check": "prettier -c src/**/*.{css,ts,vue}",
     "test:integ": "playwright test",
     "preview": "vite preview"
   },
