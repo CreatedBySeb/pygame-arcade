@@ -296,6 +296,15 @@ export class Runtime extends TestHelper {
   }
 
   /**
+   * Asserts no program is running, based on the disabled state of the stop
+   * button
+   */
+  public async isStopped(): Promise<void> {
+    const button = this.page.getByRole("button", { name: "Stop" });
+    await expect(button).toBeDisabled(); // Should be disabled when stopped
+  }
+
+  /**
    * Navigate to the editor and wait for it to load
    */
   public async loadEditor(): Promise<void> {
@@ -317,6 +326,7 @@ export class Runtime extends TestHelper {
   public async stop(...clickArgs: Parameters<Locator["click"]>): Promise<void> {
     const button = this.page.getByRole("button", { name: "Stop" });
     await button.click(...clickArgs);
+    await this.isStopped();
   }
 
   /**

@@ -11,6 +11,7 @@ import {
   eraseProject,
   importProject,
   interrupt,
+  programRunning,
   pyodideLoaded,
   runProgram,
 } from "@/runtime.ts";
@@ -171,7 +172,7 @@ const menuItems: Ref<MenuItem[]> = ref([
           />
           <Button
             severity="secondary"
-            :disabled="!pyodideLoaded"
+            :disabled="!pyodideLoaded || !programRunning"
             icon="pi pi-stop"
             label="Stop"
             @click="interrupt"

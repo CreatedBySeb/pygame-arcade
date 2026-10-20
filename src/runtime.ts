@@ -346,6 +346,9 @@ export async function interrupt(): Promise<void> {
 /** The paths currently having their contents refreshed */
 export const loadingPaths = readonly(loadingPathsRef);
 
+/** Whether a program is currently running */
+export const programRunning = readonly(startedRef);
+
 /**
  * Computed ref that indicates whether Pyodide and Pygame have finished loading
  * in the worker
