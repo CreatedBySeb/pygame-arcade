@@ -297,7 +297,8 @@ export function downloadProject(): void {
 /**
  * Triggers an erase of all project files, restoring the base template
  */
-export function eraseProject(): void {
+export async function eraseProject(): Promise<void> {
+  await interrupt();
   resetProject();
   postMessage({ _type: "eraseProject" });
 }

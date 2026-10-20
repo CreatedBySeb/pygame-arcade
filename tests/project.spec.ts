@@ -101,6 +101,9 @@ test.describe("project", () => {
     // Erase the project
     await project.erase();
 
+    // Expect the runtime to be stopped
+    await runtime.isStopped();
+
     // Check the edits are gone
     const fileItem = page.getByRole("treeitem", { name: "reset.py" });
     await expect(fileItem).toBeHidden();
