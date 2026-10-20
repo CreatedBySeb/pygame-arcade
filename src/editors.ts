@@ -27,6 +27,7 @@ import {
   highlightActiveLine,
   keymap,
   lineNumbers,
+  scrollPastEnd,
 } from "@codemirror/view";
 import { computed, readonly, ref, shallowReactive } from "vue";
 
@@ -100,6 +101,7 @@ function createEditor(path: string, contents: string): void {
       closeBrackets(),
       autocompletion(),
       highlightActiveLine(),
+      scrollPastEnd(),
       keymap.of([
         ...closeBracketsKeymap,
         ...defaultKeymap,

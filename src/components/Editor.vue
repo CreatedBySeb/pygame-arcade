@@ -70,6 +70,7 @@ onMounted(() => {
 
     & .cm-scroller {
       overflow: auto;
+      overscroll-behavior: none;
     }
   }
 
