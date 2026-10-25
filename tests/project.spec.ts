@@ -1,12 +1,12 @@
 import test, { expect, type Page } from "@playwright/test";
 import { createHash } from "node:crypto";
-import type Stream from "node:stream";
+import { buffer } from "node:stream/consumers";
 import { openPromise } from "yauzl";
 import { FileBrowser, Project, Runtime, failOnErrors } from "./helpers";
 
 // SHA-256 hash for the main.py file in the template
 const MAIN_PY_HASH =
-  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+  "d8c7efd778a61ba58f9c5397ca5883eb3dc23ff586fe3c9e6a88d41a88c9c27f";
 
 test.describe("project", () => {
   let fileBrowser: FileBrowser;
@@ -35,14 +35,14 @@ test.describe("project", () => {
     expect(zipFile.entryCount, "Expect zip to only have 1 file").toBe(1);
 
     // Find main.py in the zip file
-    let mainPy: Stream.Readable | undefined = undefined;
+    let mainPy: Buffer | undefined = undefined;
 
     for await (const entry of zipFile.eachEntry()) {
       if (entry.fileName !== "main.py") {
         continue;
       }
 
-      mainPy = await zipFile.openReadStreamPromise(entry);
+      mainPy = await buffer(await zipFile.openReadStreamPromise(entry));
     }
 
     // Expect main.py to have been found
@@ -50,7 +50,7 @@ test.describe("project", () => {
 
     // Compare the hashes
     const hash = createHash("sha256");
-    const digest = mainPy?.pipe(hash).digest("hex");
+    const digest = hash.update(mainPy!).digest("hex");
     expect(digest, "Expect main.py hash to match").toBe(MAIN_PY_HASH);
   });
 
