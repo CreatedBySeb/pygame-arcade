@@ -116,6 +116,27 @@ test.describe("core", () => {
     await expect(outputPanel).toContainText("hi");
   });
 
+  test("tab indents code", async () => {
+    // Add initial content
+    const editor = page.getByRole("textbox");
+    await editor.fill("# Indent test");
+
+    // Check the tab escape hint is shows on focus
+    await editor.focus();
+    const hint = page.getByText(
+      "Editor is focused, press Escape to navigate to other elements using tab.",
+    );
+    await expect(hint).toBeVisible();
+
+    // Try to indent
+    await editor.press("Tab");
+    await expect(editor).toContainText("    # Indent test");
+
+    // Check hint hides if focus lost
+    await editor.blur();
+    await expect(hint).toBeHidden();
+  });
+
   test("edits persist across reloads", async ({ browserName }) => {
     // FIXME: Webkit seems to raise a COEP error on reload when served by Vite
     test.skip(browserName === "webkit", "Reload fails due to COEP");

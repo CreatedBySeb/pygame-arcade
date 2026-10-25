@@ -6,7 +6,12 @@ import {
   closeBracketsKeymap,
   completionKeymap,
 } from "@codemirror/autocomplete";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+} from "@codemirror/commands";
 import { json } from "@codemirror/lang-json";
 import { python } from "@codemirror/lang-python";
 import { yaml } from "@codemirror/lang-yaml";
@@ -28,6 +33,8 @@ import {
   keymap,
   lineNumbers,
   scrollPastEnd,
+  ViewPlugin,
+  type ViewUpdate,
 } from "@codemirror/view";
 import { computed, readonly, ref, shallowReactive } from "vue";
 
@@ -61,6 +68,31 @@ function updateListener(path: string): Extension {
     );
   });
 }
+
+// FIXME: Was not able to get a screen-reader compatible solution as the alert
+//   is always interrupted by the first line of code, need to revisit this.
+const tabEscapePlugin = ViewPlugin.fromClass(
+  class {
+    hint: HTMLDivElement;
+
+    constructor(view: EditorView) {
+      this.hint = document.createElement("div");
+      this.hint.classList.add("tab-escape-hint");
+      this.hint.innerText =
+        "Editor is focused, press Escape to navigate to other elements using tab.";
+
+      view.dom.appendChild(this.hint);
+    }
+
+    destroy() {
+      this.hint.remove();
+    }
+
+    update(update: ViewUpdate) {
+      this.hint.style.visibility = update.view.hasFocus ? "visible" : "hidden";
+    }
+  },
+);
 
 /** The path currently being edited */
 export const editedPath = readonly(focusedPathRef);
@@ -108,9 +140,11 @@ function createEditor(path: string, contents: string): void {
         ...searchKeymap,
         ...historyKeymap,
         ...completionKeymap,
+        indentWithTab,
       ]),
       ...languageExtension,
       updateListener(path),
+      tabEscapePlugin,
     ],
   });
 

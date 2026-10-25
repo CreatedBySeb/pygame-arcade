@@ -88,5 +88,17 @@ onMounted(() => {
       font-size: 2rem;
     }
   }
+
+  & .tab-escape-hint {
+    background-color: var(--p-surface-100);
+    border-top-left-radius: var(--p-form-field-border-radius);
+    bottom: 0;
+    color: var(--p-surface-800);
+    right: 0;
+    padding: .5rem;
+    position: absolute;
+    text-align: right;
+    width: max-content;
+  }
 }
 </style>
