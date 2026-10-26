@@ -287,6 +287,12 @@ test.describe("core", () => {
     // Start the project
     await runtime.start();
 
+    // Expect focus notice to be shown
+    const focusNotice = page.getByText(
+      "Game is receiving inputs, press Escape to return to the editor",
+    );
+    await expect(focusNotice).toBeVisible();
+
     // Wait for the start indicator
     const outputPanel = page.getByRole("tabpanel", { name: "Output" });
     await expect(outputPanel).toContainText("Ready!");
@@ -323,5 +329,8 @@ test.describe("core", () => {
     await expect(outputPanel).toContainText(
       ["Key Pressed: b", "Key Released: b"].join("\n"),
     );
+
+    // Expect focus notice to be hidden
+    await expect(focusNotice).toBeHidden();
   });
 });

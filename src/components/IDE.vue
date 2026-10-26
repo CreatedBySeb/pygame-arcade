@@ -7,9 +7,9 @@ import About from "@/components/dialogs/About.vue";
 import ImportProject from "@/components/dialogs/ImportProject.vue";
 import { closeAllEditors } from "@/editors";
 import {
+  canvasFocusedRef,
   downloadProject,
   eraseProject,
-  focusCanvas,
   fullscreenRef,
   importProject,
   interrupt,
@@ -79,8 +79,8 @@ async function loadAliens() {
 }
 
 function makeFullscreen() {
+  canvasFocusedRef.value = true;
   fullscreenRef.value = true;
-  focusCanvas();
 }
 
 function run() {
@@ -210,6 +210,9 @@ const menuItems: Ref<MenuItem[]> = ref([
         <Window />
         <Message v-show="!pyodideLoaded" severity="secondary">
           Loading Python...
+        </Message>
+        <Message v-show="programRunning && canvasFocusedRef" severity="secondary">
+          Game is receiving inputs, press Escape to return to the editor
         </Message>
       </div>
     </SplitterPanel>

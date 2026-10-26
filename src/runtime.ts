@@ -65,7 +65,7 @@ const pendingReads: Record<string, PromiseFunctions<string>> = {};
 const stoppedPromises: (() => void)[] = [];
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-const canvasFocusedRef = ref<boolean>(false);
+export const canvasFocusedRef = ref<boolean>(false);
 const fileStructureRef = ref<DirectoryContents>({});
 export const fullscreenRef = ref<boolean>(false);
 const loadingPathsRef = ref<string[]>([]);
@@ -334,13 +334,6 @@ export async function eraseProject(): Promise<void> {
  * A read-only representation of the file system structure
  */
 export const fileSystem = readonly(fileStructureRef);
-
-/**
- * Refocus the canvas (i.e. interrupt inputs)
- */
-export function focusCanvas(): void {
-  canvasFocusedRef.value = true;
-}
 
 /**
  * Triggers an import of a project from a provided zip file
