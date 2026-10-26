@@ -9,6 +9,8 @@ import { closeAllEditors } from "@/editors";
 import {
   downloadProject,
   eraseProject,
+  focusCanvas,
+  fullscreenRef,
   importProject,
   interrupt,
   programRunning,
@@ -27,7 +29,6 @@ import { ref, useTemplateRef, type Ref } from "vue";
 
 const confirm = useConfirm();
 const aboutVisible = ref(false);
-const fullscreen = ref(false);
 const importVisible = ref(false);
 
 function confirmErase() {
@@ -75,6 +76,11 @@ async function loadAliens() {
       severity: "secondary",
     },
   });
+}
+
+function makeFullscreen() {
+  fullscreenRef.value = true;
+  focusCanvas();
 }
 
 function run() {
@@ -182,7 +188,7 @@ const menuItems: Ref<MenuItem[]> = ref([
             :disabled="!pyodideLoaded"
             icon="pi pi-window-maximize"
             label="Fullscreen"
-            @click="() => (fullscreen = true)"
+            @click="makeFullscreen"
           />
           <Button
             severity="secondary"
@@ -201,7 +207,7 @@ const menuItems: Ref<MenuItem[]> = ref([
             :model="menuItems"
           />
         </div>
-        <Window v-model:fullscreen="fullscreen" />
+        <Window />
         <Message v-show="!pyodideLoaded" severity="secondary">
           Loading Python...
         </Message>

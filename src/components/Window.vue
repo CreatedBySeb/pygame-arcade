@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { setCanvas } from "@/runtime";
+import { fullscreenRef, setCanvas } from "@/runtime";
 import Button from "primevue/button";
 import { onMounted, useTemplateRef } from "vue";
 
 const canvasRef = useTemplateRef("canvas");
-const fullscreen = defineModel<boolean>("fullscreen", {
-  required: true,
-  default: false,
-});
 
 onMounted(() => {
   setCanvas(canvasRef.value!);
@@ -15,19 +11,19 @@ onMounted(() => {
 </script>
 
 <template>
-  <div id="window" :class="{ fullscreen }">
+  <div id="window" :class="{ fullscreen: fullscreenRef }">
     <div id="aspect-container">
       <canvas id="canvas" ref="canvas" height="640" width="480"></canvas>
     </div>
     <Button
       id="close-fullscreen"
-      v-show="fullscreen"
+      v-show="fullscreenRef"
       icon="pi pi-times"
       title="Close Fullscreen"
       aria-label="Close Fullscreen"
       severity="secondary"
       rounded
-      @click="() => (fullscreen = false)"
+      @click="() => (fullscreenRef = false)"
     />
   </div>
 </template>

@@ -65,7 +65,9 @@ const pendingReads: Record<string, PromiseFunctions<string>> = {};
 const stoppedPromises: (() => void)[] = [];
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
+const canvasFocusedRef = ref<boolean>(false);
 const fileStructureRef = ref<DirectoryContents>({});
+export const fullscreenRef = ref<boolean>(false);
 const loadingPathsRef = ref<string[]>([]);
 const readyRef = ref<boolean>(false);
 const startedRef = ref<boolean>(false);
@@ -77,7 +79,32 @@ const taskRunningRef = ref<boolean>(false);
 DOCUMENT_EVENTS.forEach((name) => {
   document.addEventListener(
     name,
-    (event) => relayEvent(event),
+    (event) => {
+      // Special handling for Escape to allow breaking canvas focus
+      if (
+        event instanceof KeyboardEvent &&
+        event.type === "keydown" &&
+        event.key === "Escape"
+      ) {
+        canvasFocusedRef.value = false;
+        fullscreenRef.value = false;
+        return;
+      }
+
+      if (
+        event instanceof KeyboardEvent &&
+        startedRef.value &&
+        canvasFocusedRef.value
+      ) {
+        // Prevent key events from affecting the UI while the project is running
+        event.preventDefault();
+        event.stopPropagation();
+        relayEvent(event);
+      } else if (startedRef.value) {
+        // For other events, only require the project to be running
+        relayEvent(event);
+      }
+    },
     // Special handling since only pointerlockchange has options
     name === "pointerlockchange" ? false : undefined,
   );
@@ -309,6 +336,13 @@ export async function eraseProject(): Promise<void> {
 export const fileSystem = readonly(fileStructureRef);
 
 /**
+ * Refocus the canvas (i.e. interrupt inputs)
+ */
+export function focusCanvas(): void {
+  canvasFocusedRef.value = true;
+}
+
+/**
  * Triggers an import of a project from a provided zip file
  * @param file The zip file to import from
  */
@@ -416,6 +450,7 @@ export async function runProgram(): Promise<void> {
   clearOutput();
   interruptBuf[0] = INTERRUPT_CLEAR;
   startedRef.value = true;
+  canvasFocusedRef.value = true; // Focus the canvas automatically
   postMessage({ _type: "run" });
 }
 

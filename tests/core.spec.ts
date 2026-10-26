@@ -107,6 +107,21 @@ test.describe("core", () => {
     await startButton.hover();
   });
 
+  test("escape closes fullscreen", async () => {
+    // Toggle fullscreen
+    await runtime.fullscreen();
+
+    // Verify canvas is fully visible
+    const canvas = page.locator("canvas");
+    await expect(canvas).toBeInViewport({ ratio: 1 });
+
+    // Escape fullscreen
+    await canvas.press("Escape");
+
+    // Verify able to hover the start button
+    await page.getByRole("button", { name: "Run it!" }).hover();
+  });
+
   test("edits affect execution", async () => {
     // Edit the file
     const editor = page.getByRole("textbox");
@@ -296,6 +311,17 @@ test.describe("core", () => {
     await page.touchscreen.tap(boundingBox!.x + 20, boundingBox!.y + 10);
     await expect(outputPanel).toContainText(
       ["Mouse Pressed: 1 (33, 16)", "Mouse Released: 1 (33, 16)"].join("\n"),
+    );
+
+    // Escape stops input
+    await canvas.press("Escape");
+    await expect(outputPanel).not.toContainText(
+      ["Key Pressed: Escape", "Key Released: Escape"].join("\n"),
+    );
+
+    await canvas.press("b");
+    await expect(outputPanel).toContainText(
+      ["Key Pressed: b", "Key Released: b"].join("\n"),
     );
   });
 });
