@@ -77,6 +77,9 @@ test.describe("core", () => {
 
     // Check the console was cleared
     await expect(outputPanel).toContainText(/^$/);
+
+    // Stop the project again
+    await runtime.stop();
   });
 
   test("open and close fullscreen", async () => {
@@ -86,21 +89,22 @@ test.describe("core", () => {
     // Verify canvas is fully visible
     await expect(page.locator("canvas")).toBeInViewport({ ratio: 1 });
 
-    // Verify unable to click the stop button
+    // Verify unable to hover the start button
+    const startButton = page.getByRole("button", { name: "Run it!" });
     let failed: boolean = false;
     try {
-      await runtime.stop({ timeout: 1000 });
+      await startButton.hover({ timeout: 1000 });
     } catch (e) {
       failed = true;
     }
 
-    expect(failed, "Expect stop button not to be clickable").toBeTruthy();
+    expect(failed, "Expect start button not to be hovered").toBeTruthy();
 
     // Close fullscreen
     await runtime.closeFullscreen();
 
-    // Verify able to click the stop button
-    await runtime.stop();
+    // Verify able to hover the start button
+    await startButton.hover();
   });
 
   test("edits affect execution", async () => {
