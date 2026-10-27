@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
-import { Runtime, failOnErrors } from "./helpers";
+import { FileBrowser, Runtime, failOnErrors } from "./helpers";
 
 const EXPECTED_FILES: RegExp[] = [
   /\/pyodide-lock.json$/,
@@ -47,12 +47,14 @@ test("loads runtime", async ({ page }) => {
 test.describe("core", () => {
   let page: Page;
   let runtime: Runtime;
+  let fileBrowser: FileBrowser;
 
   test.beforeAll(async ({ browser }) => {
     page = await browser.newPage();
     failOnErrors(page);
 
     runtime = new Runtime(page);
+    fileBrowser = new FileBrowser(page);
     await runtime.loadEditor();
   });
 
@@ -133,6 +135,46 @@ test.describe("core", () => {
     // Check the message is printed
     const outputPanel = page.getByRole("tabpanel", { name: "Output" });
     await expect(outputPanel).toContainText("hi");
+  });
+
+  test("editing imported modules affect execution", async () => {
+    // Setup the main file
+    const editor = page.getByRole("textbox");
+    await editor.fill(
+      [
+        "import module_test",
+        "def main():",
+        "    module_test.test_function()",
+      ].join("\n"),
+    );
+
+    // Create module
+    await fileBrowser.createFile("module_test.py");
+    await editor.fill(
+      ["def test_function():", '    print("Original content")'].join("\n"),
+    );
+
+    // Start the project
+    await runtime.start();
+
+    // Check the original message is printed
+    const outputPanel = page.getByRole("tabpanel", { name: "Output" });
+    await expect(outputPanel).toContainText("Original content");
+
+    // Modify module
+    await editor.fill(
+      ["def test_function():", '    print("Modified content")'].join("\n"),
+    );
+
+    // Restart the project
+    await runtime.start();
+
+    // Check the modified message is printed
+    await expect(outputPanel).toContainText("Modified content");
+
+    // Re-select main file
+    await fileBrowser.getItem("main.py").then((i) => i.click());
+    await expect(editor).toContainText("def main():");
   });
 
   test("tab indents code", async () => {
