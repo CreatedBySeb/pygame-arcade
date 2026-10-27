@@ -77,8 +77,10 @@ test.describe("core", () => {
     await runtime.stop();
     await runtime.start();
 
-    // Check the console was cleared
-    await expect(outputPanel).toContainText(/^$/);
+    // Check the message is printed again
+    await expect(outputPanel).toContainText(
+      /pygame-ce [\d.]+ \(SDL [\d.]+, Python [\d.]+\)/,
+    );
 
     // Stop the project again
     await runtime.stop();
@@ -135,6 +137,15 @@ test.describe("core", () => {
     // Check the message is printed
     const outputPanel = page.getByRole("tabpanel", { name: "Output" });
     await expect(outputPanel).toContainText("hi");
+
+    // Replace with empty function
+    await editor.fill(["def main():", "    pass"].join("\n"));
+
+    // Re-start the project
+    await runtime.start();
+
+    // Expect the output to be empty
+    await expect(outputPanel).toContainText(/^$/);
   });
 
   test("editing imported modules affect execution", async () => {
@@ -281,9 +292,9 @@ test.describe("core", () => {
   });
 
   test("missing main displays error", async () => {
-    // Edit the file to be empty
+    // Edit the file to be missing main
     const editor = page.getByRole("textbox");
-    await editor.fill("");
+    await editor.fill(["def not_main():", "    pass"].join("\n"));
 
     // Start the project
     await runtime.start();

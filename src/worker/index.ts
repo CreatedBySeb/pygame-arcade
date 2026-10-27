@@ -2,7 +2,6 @@ import { proxyInDev } from "@/debug";
 import deletePath from "@/scripts/delete_path.py?raw";
 import exportProject from "@/scripts/export_project.py?raw";
 import importProject from "@/scripts/import_project.py?raw";
-import invalidateImports from "@/scripts/invalidate_imports.py?raw";
 import runProject from "@/scripts/run_project.py?raw";
 import mainTemplate from "@/templates/main.py?raw";
 import {
@@ -47,40 +46,12 @@ const window = proxyInDev(new WindowStub(eventListeners));
 (globalThis.screen as any) = screen;
 (globalThis.window as any) = window;
 
+let pyoSnapshot: Uint8Array | undefined = undefined;
+
 // Initialise pyodide
-const pyodideReady = loadPyodide({
-  indexURL: `${import.meta.env.BASE_URL}assets/pyodide`,
-  packageBaseUrl: `${self.location.protocol}//${self.location.host}/assets/wheels/`,
-}).then(async (pyo) => {
-  // Start loading pygame while doing other setup
-  const pygamePromise = pyo.loadPackage(["pygame-ce"]);
-
-  // Enable debug in dev
-  pyo.setDebug(import.meta.env.DEV);
-
-  // Workaround for https://github.com/pyodide/pyodide/issues/3697
-  (pyo as any)._api._skip_unwind_fatal_error = true;
-
-  // Mount project directory
-  pyo.FS.mkdir(PROJECT_ROOT);
-  // @ts-expect-error -- Pyodide filesystems are not included in type currently
-  pyo.FS.mount(pyo.FS.filesystems.IDBFS, { autoPersist: true }, PROJECT_ROOT);
-  await syncFS(pyo, true).catch(console.error); // Ensure data is read in before changes
-  pyo.FS.chdir(PROJECT_ROOT);
-
-  // Bootstrap the project
-  await bootstrapProject(pyo);
-
-  // Wait for pygame to finish loading
-  await pygamePromise;
-
-  // Transmit stdout/stderr
-  pyo.setStderr({ write: sendStderr });
-  pyo.setStdout({ write: sendStdout });
-
+const pyodideReady = createInterpreter(true).then(async (pyo) => {
   // Alert main thread we are ready to run
   post({ _type: "ready" });
-
   return pyo;
 });
 
@@ -112,6 +83,75 @@ async function bootstrapProject(pyo: PyodideAPI): Promise<void> {
 
   // Ensure bootstrapped project is persisted
   await syncFS(pyo, false).catch(console.error);
+}
+
+/**
+ * Creates a new Pyodide interpreter
+ */
+async function createInterpreter(
+  preload: boolean = false,
+): Promise<PyodideAPI> {
+  // Start timing in development
+  let start: number | undefined;
+  if (import.meta.env.DEV) {
+    start = Date.now();
+    console.debug(
+      `Started loading interpreter at ${start} (preload=${preload})`,
+    );
+  }
+
+  const pyo = await loadPyodide({
+    indexURL: `${import.meta.env.BASE_URL}assets/pyodide`,
+    packageBaseUrl: `${self.location.protocol}//${self.location.host}/assets/wheels/`,
+    _makeSnapshot: preload, // Only need this capability in preload
+    _loadSnapshot: pyoSnapshot,
+  });
+
+  // Snapshot memory after preload for faster re-starts later
+  if (preload) {
+    pyoSnapshot = pyo.makeMemorySnapshot();
+  }
+
+  // Start loading pygame while doing other setup
+  const pygamePromise = pyo.loadPackage(["pygame-ce"]);
+
+  // Enable debug in dev
+  pyo.setDebug(import.meta.env.DEV);
+
+  // Workaround for https://github.com/pyodide/pyodide/issues/3697
+  (pyo as any)._api._skip_unwind_fatal_error = true;
+
+  // Mount project directory
+  pyo.FS.mkdir(PROJECT_ROOT);
+  // @ts-expect-error -- Pyodide filesystems are not included in type currently
+  pyo.FS.mount(pyo.FS.filesystems.IDBFS, { autoPersist: true }, PROJECT_ROOT);
+  await syncFS(pyo, true).catch(console.error); // Ensure data is read in before changes
+  pyo.FS.chdir(PROJECT_ROOT);
+
+  // Bootstrap the project
+  await bootstrapProject(pyo);
+
+  // Set canvas if available
+  if (canvas) {
+    pyo.canvas.setCanvas2D(canvas);
+  }
+
+  // Wait for pygame to finish loading
+  await pygamePromise;
+
+  if (import.meta.env.DEV) {
+    let end = Date.now();
+
+    console.debug(
+      `Finished loading interpreter at ${end} (duration: ${end - start!}ms)`,
+    );
+  }
+
+  // Transmit stdout/stderr
+  pyo.setStderr({ write: sendStderr });
+  pyo.setStdout({ write: sendStdout });
+
+  return pyo;
 }
 
 /**
@@ -325,8 +365,8 @@ self.onmessage = async (event): Promise<void> => {
     }
 
     case "run": {
-      // FIXME: Handle indirectly started tasks?
-      pyodide.runPython(invalidateImports);
+      await syncFS(pyodide, false);
+      pyodide = await createInterpreter();
       let maybeCoroutine: PyProxy;
 
       try {
