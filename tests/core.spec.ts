@@ -9,6 +9,8 @@ const EXPECTED_FILES: RegExp[] = [
   /\/pygame_ce-.*\.whl$/,
 ];
 
+const PYGAME_HEADER_REGEXP = /pygame-ce [\d.]+ \(SDL [\d.]+, Python [\d.]+\)/;
+
 test("loads runtime", async ({ page }) => {
   failOnErrors(page);
 
@@ -68,15 +70,15 @@ test.describe("core", () => {
     ).not.toBeFocused();
 
     // Check the pygame-ce message is printed
-    await runtime.hasOutput(/pygame-ce [\d.]+ \(SDL [\d.]+, Python [\d.]+\)/);
+    await runtime.hasOutput(PYGAME_HEADER_REGEXP);
 
     // Restart the project
     await runtime.stop();
     await runtime.hasNoErrors();
     await runtime.start();
 
-    // Check the console was cleared
-    await runtime.hasOutput(EMPTY_REGEXP);
+    // Check the message is printed again
+    await runtime.hasOutput(PYGAME_HEADER_REGEXP);
 
     // Stop the project again
     await runtime.stop();
@@ -134,6 +136,15 @@ test.describe("core", () => {
     // Check the message is printed
     await runtime.hasOutput("hi");
     await runtime.hasNoErrors();
+
+    // Replace with empty function
+    await editor.fill(["def main():", "    pass"].join("\n"));
+
+    // Re-start the project
+    await runtime.start();
+
+    // Expect the output to be empty
+    await runtime.hasOutput(/^$/);
   });
 
   test("editing imported modules affect execution", async () => {
@@ -287,9 +298,9 @@ test.describe("core", () => {
   });
 
   test("missing main displays error", async () => {
-    // Edit the file to be empty
+    // Edit the file to be missing main
     const editor = page.getByRole("textbox");
-    await editor.fill("");
+    await editor.fill(["def not_main():", "    pass"].join("\n"));
 
     // Start the project
     await runtime.start();
