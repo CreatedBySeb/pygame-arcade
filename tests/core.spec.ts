@@ -218,13 +218,29 @@ test.describe("core", () => {
     // Edit the file
     const editor = page.getByRole("textbox");
     await editor.fill(marker);
-    await page.waitForTimeout(100); // FIXME: Brief wait for persistence consistency
+    await expect(editor).toContainText(marker);
 
     // Reload the page
     await runtime.loadEditor();
 
     // Assert content remained the same
     await expect(editor).toContainText(marker);
+  });
+
+  test("blank files are written correctly", async ({ browserName }) => {
+    // FIXME: Webkit seems to raise a COEP error on reload when served by Vite
+    test.skip(browserName === "webkit", "Reload fails due to COEP");
+
+    // Clear the file
+    const editor = page.getByRole("textbox");
+    await editor.fill("");
+    await expect(editor).toContainText(/^$/);
+
+    // Reload the page
+    await runtime.loadEditor();
+
+    // Assert file remained empty
+    await expect(editor).toContainText(/^$/);
   });
 
   test("sync error is handled", async () => {

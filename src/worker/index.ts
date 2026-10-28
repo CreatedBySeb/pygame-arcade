@@ -282,6 +282,13 @@ self.onmessage = async (event): Promise<void> => {
       const parent = "/" + joinPath(parts.slice(0, -1));
 
       pyodide.FS.mkdirTree(parent);
+
+      if (!message.contents && pyodide.FS.analyzePath(message.path).exists) {
+        // IDBFS does not persist correctly when a file is edited to be empty,
+        // so we must unlink it first
+        pyodide.FS.unlink(message.path);
+      }
+
       pyodide.FS.writeFile(message.path, message.contents);
       listDir(pyodide, parent);
       break;
