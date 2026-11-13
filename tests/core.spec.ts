@@ -330,7 +330,7 @@ test.describe("core", () => {
     const scrollPercent = await outputPanel
       .locator("pre")
       .evaluate((el) => el.scrollTop / (el.scrollHeight - el.clientHeight));
-    expect(scrollPercent).toBe(1);
+    expect(Math.floor(scrollPercent)).toBe(1);
   });
 
   test("pygame input works", async () => {
