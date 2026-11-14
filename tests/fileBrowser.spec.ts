@@ -46,7 +46,7 @@ test.describe("file browser", () => {
     }
   });
 
-  test("create file", async () => {
+  test("create python file", async () => {
     // Create the file
     await fileBrowser.createFile("file.py");
 
@@ -58,6 +58,18 @@ test.describe("file browser", () => {
     await expect(page.getByRole("textbox")).toContainText(
       "def my_func() -> None:",
     );
+  });
+
+  test("create text file", async () => {
+    // Create the file
+    await fileBrowser.createFile("file.txt");
+
+    // Check for the new file
+    const file = await fileBrowser.getItem("file.txt");
+    await expect(file).toBeChecked();
+
+    // Check content is switched
+    await expect(page.getByRole("textbox")).toContainText(EMPTY_REGEXP);
   });
 
   test("create nested file with path", async () => {
