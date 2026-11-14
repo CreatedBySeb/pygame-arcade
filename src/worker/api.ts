@@ -71,10 +71,6 @@ export interface RenameMessage {
 
 export interface RunMessage {
   _type: "run";
-}
-
-export interface SetCanvasMessage {
-  _type: "setCanvas";
   /** The bounding client rect of the canvas */
   boundingRect: DOMRect;
   /** The offscreen canvas controlling the HTML canvas */
@@ -82,7 +78,6 @@ export interface SetCanvasMessage {
   /** The size of the screen */
   screenSize: [number, number];
 }
-
 export interface SetInterruptMessage {
   _type: "setInterrupt";
   /** The buffer used to signal the interrupt */
@@ -114,7 +109,6 @@ export type IncomingWorkerMessage =
   | RelayEventMessage
   | RenameMessage
   | RunMessage
-  | SetCanvasMessage
   | SetInterruptMessage
   | StopMessage
   | UploadFilesMessage;

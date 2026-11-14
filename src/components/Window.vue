@@ -1,19 +1,12 @@
 <script setup lang="ts">
-import { fullscreenRef, setCanvas } from "@/runtime";
+import { fullscreenRef } from "@/runtime";
 import Button from "primevue/button";
-import { onMounted, useTemplateRef } from "vue";
-
-const canvasRef = useTemplateRef("canvas");
-
-onMounted(() => {
-  setCanvas(canvasRef.value!);
-});
 </script>
 
 <template>
   <div id="window" :class="{ fullscreen: fullscreenRef }">
     <div id="aspect-container">
-      <canvas id="canvas" ref="canvas" height="640" width="480"></canvas>
+      <canvas id="canvas" height="640" width="480"></canvas>
     </div>
     <Button
       id="close-fullscreen"

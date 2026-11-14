@@ -64,7 +64,6 @@ const interruptBuf = new Uint8Array(new SharedArrayBuffer(1));
 const pendingReads: Record<string, PromiseFunctions<string>> = {};
 const stoppedPromises: (() => void)[] = [];
 
-const canvasRef = ref<HTMLCanvasElement | null>(null);
 export const canvasFocusedRef = ref<boolean>(false);
 const fileStructureRef = ref<DirectoryContents>({});
 export const fullscreenRef = ref<boolean>(false);
@@ -229,12 +228,6 @@ pyodideWorker.onmessage = async (event): Promise<void> => {
     case "ready": {
       readyRef.value = true;
       postMessage({ _type: "setInterrupt", buffer: interruptBuf });
-
-      if (canvasRef.value) {
-        transferCanvasControl(canvasRef.value);
-        canvasRef.value = null; // Unset to avoid re-attempting transfer
-      }
-
       refreshContents(PROJECT_ROOT);
       break;
     }
@@ -422,20 +415,6 @@ export function renamePath(path: string, name: string): void {
 }
 
 /**
- * Transfers control of the specified canvas element to the Pyodide worker and
- * sets it up for use with Pygame
- *
- * @param canvas The canvas element to use
- */
-export function setCanvas(canvas: HTMLCanvasElement): void {
-  if (pyodideLoaded.value) {
-    transferCanvasControl(canvas);
-  } else {
-    canvasRef.value = canvas;
-  }
-}
-
-/**
  * Request the Pyodide worker to execute the currently written program
  */
 export async function runProgram(): Promise<void> {
@@ -443,8 +422,23 @@ export async function runProgram(): Promise<void> {
   clearOutput();
   interruptBuf[0] = INTERRUPT_CLEAR;
   startedRef.value = true;
-  canvasFocusedRef.value = true; // Focus the canvas automatically
-  postMessage({ _type: "run" });
+
+  // Reset canvas
+  const canvas = setupCanvas();
+  const offscreen = canvas.transferControlToOffscreen();
+
+  // Focus the canvas automatically
+  canvasFocusedRef.value = true;
+
+  postMessage(
+    {
+      _type: "run",
+      boundingRect: canvas.getBoundingClientRect(),
+      canvas: offscreen,
+      screenSize: [screen.width, screen.height],
+    },
+    [offscreen],
+  );
 }
 
 /**
@@ -500,6 +494,38 @@ function resetProject() {
 }
 
 /**
+ * Internal helper for setting up a canvas for use with SDL in a worker
+ */
+function setupCanvas(): HTMLCanvasElement {
+  // Firefox 159 has an aggressive thread check in
+  // `OffscreenCanvasDisplayHelper::MayUpdateContext` that prevents a worker
+  // from re-creating a canvas context, so we need to create a fresh canvas each
+  // run to work around this.
+  //
+  // Problem commit: https://github.com/mozilla-firefox/firefox/commit/3eabae803146e6a0e25aaa6beb9e9fef4a13c468
+  // Fix in 160: https://github.com/mozilla-firefox/firefox/commit/bcd3856fe0295ec7742421cc07ff5b662eab5a8e
+  const previous = document.getElementById("canvas");
+
+  if (!previous) {
+    throw new Error(
+      "Attempted to setup a new canvas but previous one doesn't exist",
+    );
+  }
+
+  const canvas = previous.cloneNode() as HTMLCanvasElement;
+
+  CANVAS_EVENTS.forEach((name) => {
+    canvas.addEventListener(name, (event) => relayEvent(event));
+  });
+
+  canvasObserver.observe(canvas);
+
+  previous.parentElement!.replaceChild(canvas, previous);
+
+  return canvas;
+}
+
+/**
  * Internal helper for asynchronously sleeping for a given number of
  * milliseconds using setTimeout
  *
@@ -510,34 +536,6 @@ function sleep(duration: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(() => resolve(), duration);
   });
-}
-
-/**
- * Internal helper for transferring canvas control, extracted so it can be
- * deferred if the worker is not ready yet
- *
- * @param canvas The canvas element to transfer control over
- */
-function transferCanvasControl(canvas: HTMLCanvasElement): void {
-  // FIXME: Event listeners are never removed, so theoretically if another
-  //   canvas was set, there could be duplicates (though this seems unlikely
-  //   given the events being listened to)
-  CANVAS_EVENTS.forEach((name) => {
-    canvas.addEventListener(name, (event) => relayEvent(event));
-  });
-
-  canvasObserver.observe(canvas);
-
-  const offscreen = canvas.transferControlToOffscreen();
-  postMessage(
-    {
-      _type: "setCanvas",
-      boundingRect: canvas.getBoundingClientRect(),
-      canvas: offscreen,
-      screenSize: [screen.width, screen.height],
-    },
-    [offscreen],
-  );
 }
 
 /**

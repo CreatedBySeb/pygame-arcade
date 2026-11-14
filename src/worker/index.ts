@@ -131,11 +131,6 @@ async function createInterpreter(
   // Bootstrap the project
   await bootstrapProject(pyo);
 
-  // Set canvas if available
-  if (canvas) {
-    pyo.canvas.setCanvas2D(canvas);
-  }
-
   // Wait for pygame to finish loading
   await pygamePromise;
 
@@ -372,8 +367,18 @@ self.onmessage = async (event): Promise<void> => {
     }
 
     case "run": {
+      // Ensure files are written before re-creating interpreter
       await syncFS(pyodide, false);
+
+      // Create a fresh interpreter
       pyodide = await createInterpreter();
+
+      // Setup new canvas
+      screen.setSize(...message.screenSize);
+      canvas = fakeCanvas(message.canvas, eventListeners, message.boundingRect);
+      pyodide.canvas.setCanvas2D(canvas);
+
+      // Attempt to run user program
       let maybeCoroutine: PyProxy;
 
       try {
@@ -393,6 +398,7 @@ self.onmessage = async (event): Promise<void> => {
         return;
       }
 
+      // Handle async main function
       if (maybeCoroutine && maybeCoroutine.type === "coroutine") {
         const webloop = pyodide.runPython(
           "import asyncio\nasyncio.get_running_loop()",
@@ -408,13 +414,6 @@ self.onmessage = async (event): Promise<void> => {
         post({ _type: "finished" });
       }
 
-      break;
-    }
-
-    case "setCanvas": {
-      screen.setSize(...message.screenSize);
-      canvas = fakeCanvas(message.canvas, eventListeners, message.boundingRect);
-      pyodide.canvas.setCanvas2D(canvas);
       break;
     }
 
