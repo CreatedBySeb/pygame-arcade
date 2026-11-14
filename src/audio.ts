@@ -76,19 +76,8 @@ class ProxyProcessor
     if (this.firstRun) {
       // Always signal for new audio on first run
       this.firstRun = false;
+      this.waitSignal();
       Atomics.notify(this.signalBuffer, 0);
-    }
-
-    if (this.readOffset === 0) {
-      // Only request data from worker when we are starting a cycle
-      Atomics.wait(this.signalBuffer, 1, 0, 0.5); // FIXME: find the correct timeout, probably shorter than this?
-
-      // Copy the data out of the shared buffers
-      this.sharedBuffers.forEach((buf, i) => {
-        for (let index = 0; index < buf.length; index++) {
-          this.audioBuffers[i][index] = buf[index];
-        }
-      });
     }
 
     // FIXME: This assumes each output array only has one value, unsure if this
@@ -111,10 +100,29 @@ class ProxyProcessor
       this.readOffset = 0;
     } else if (this.readOffset >= this.bufferSize - 2 * sampleLength) {
       // Signal for new audio 2 samples before we run out
+      this.waitSignal();
       Atomics.notify(this.signalBuffer, 0);
     }
 
     return true;
+  }
+
+  protected waitSignal() {
+    const { value } = Atomics.waitAsync(this.signalBuffer, 1, 0); // FIXME: find the correct timeout, probably shorter than this?
+
+    if (value instanceof Promise) {
+      // This is busted and doesn't make sense, we need two buffers and a flip rather than randomly smashing the data in, but lets see if it kind of works
+      value.then(() => {
+        // Copy the data out of the shared buffers
+        this.sharedBuffers.forEach((buf, i) => {
+          for (let index = 0; index < buf.length; index++) {
+            this.audioBuffers[i][index] = buf[index];
+          }
+        });
+      });
+    } else {
+      console.error("[AudioWorklet] Signal buffer had wrong value");
+    }
   }
 }
 

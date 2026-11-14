@@ -277,6 +277,8 @@ class ScriptProcessorNodeStub extends AudioNodeStub {
 
     if (value instanceof Promise) {
       value.then(() => this.fakeEvent());
+    } else {
+      console.error("[Worker] Signal buffer had wrong value");
     }
   }
 }
