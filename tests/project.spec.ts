@@ -89,9 +89,15 @@ test.describe("project", () => {
     await runtime.start();
 
     // Wait a second to see if we get errors
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(3000);
 
     // Stop the program
+    await runtime.stop();
+    await runtime.hasNoErrors();
+
+    // Rerun the program
+    await runtime.start();
+    await page.waitForTimeout(3000);
     await runtime.stop();
     await runtime.hasNoErrors();
   });
