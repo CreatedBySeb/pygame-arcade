@@ -90,6 +90,10 @@ test.describe("project", () => {
 
     // Wait a second to see if we get errors
     await page.waitForTimeout(1000);
+
+    // Stop the program
+    await runtime.stop();
+    await runtime.hasNoErrors();
   });
 
   test("reset project", async () => {

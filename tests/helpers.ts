@@ -7,6 +7,11 @@ import {
 } from "@playwright/test";
 
 /**
+ * A RegExp that only matches an empty string, for use with `toContainText`
+ */
+export const EMPTY_REGEXP = /^$/;
+
+/**
  * How long to wait for the runtime to load
  *
  * This seems to take a while on headless Firefox
@@ -265,6 +270,15 @@ export class Project extends TestHelper {
 }
 
 export class Runtime extends TestHelper {
+  public errorsPanel: Locator;
+  public outputPanel: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    this.errorsPanel = this.page.getByRole("tabpanel", { name: "Errors" });
+    this.outputPanel = this.page.getByRole("tabpanel", { name: "Output" });
+  }
+
   /**
    * Closes the 'fullscreen' window
    */
@@ -293,6 +307,47 @@ export class Runtime extends TestHelper {
     await expect(
       this.page.getByRole("button", { name: "Close Fullscreen" }),
     ).toBeVisible();
+  }
+
+  /**
+   * Asserts that the errors panel contains a given string or matches a given
+   * RegExp
+   * @param output The output to expect, passed to `Locator#toContainText`
+   * @param visible Expect the output panel to be visible, defaults to true
+   */
+  public async hasErrors(output: string | RegExp): Promise<void> {
+    await expect(this.errorsPanel).toBeVisible();
+    await expect(this.errorsPanel).toContainText(output);
+  }
+
+  /**
+   * Asserts that the errors panel is empty and not shown, indicating no errors
+   * occurred in the last run
+   */
+  public async hasNoErrors(): Promise<void> {
+    await expect(this.errorsPanel).toBeHidden();
+
+    // Also check the panel is empty in case it was hidden by some other means
+    await expect(
+      this.page.getByRole("tabpanel", { name: "Errors", includeHidden: true }),
+    ).toBeEmpty();
+  }
+
+  /**
+   * Asserts that the output panel contains a given string or matches a given
+   * RegExp
+   * @param output The output to expect, passed to `Locator#toContainText`
+   * @param visible Expect the output panel to be visible, defaults to true
+   */
+  public async hasOutput(
+    output: string | RegExp,
+    visible: boolean = true,
+  ): Promise<void> {
+    if (visible) {
+      await expect(this.outputPanel).toBeVisible();
+    }
+
+    await expect(this.outputPanel).toContainText(output);
   }
 
   /**

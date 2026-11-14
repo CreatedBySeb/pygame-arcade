@@ -1,5 +1,5 @@
 import test, { expect, type Page } from "@playwright/test";
-import { FileBrowser, Runtime, failOnErrors } from "./helpers";
+import { EMPTY_REGEXP, FileBrowser, Runtime, failOnErrors } from "./helpers";
 
 test.describe("file browser", () => {
   test.describe.configure({ mode: "serial" });
@@ -30,7 +30,7 @@ test.describe("file browser", () => {
     // Check for the new entry
     const item = await fileBrowser.getItem("empty.txt");
     await item.click();
-    await expect(page.getByRole("textbox")).toContainText(/^$/);
+    await expect(page.getByRole("textbox")).toContainText(EMPTY_REGEXP);
   });
 
   test("upload multiple", async () => {
